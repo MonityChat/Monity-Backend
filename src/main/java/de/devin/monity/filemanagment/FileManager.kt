@@ -1,6 +1,6 @@
 package filemanagment
 
-import bootLocation
+import de.devin.monity.bootLocation
 import org.simpleyaml.configuration.file.YamlFile
 import java.io.File
 import java.nio.file.Files

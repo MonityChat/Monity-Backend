@@ -3,8 +3,8 @@ package de.devin.monity.util.html
 import io.ktor.application.*
 import io.ktor.html.*
 import kotlinx.html.*
-import name
-import version
+import de.devin.monity.name
+import de.devin.monity.version
 
 
 suspend fun respondHomePage(call: ApplicationCall) {
@@ -15,9 +15,12 @@ suspend fun respondHomePage(call: ApplicationCall) {
                 rel = "stylesheet"
                 href = "https://use.typekit.net/rue5taw.css"
             }
+            link {
+                rel = "icon"
+                href = "icon.png"
+            }
         }
         body {
-
             style {
                 unsafe {
                     raw("""
@@ -47,6 +50,13 @@ suspend fun respondHomePage(call: ApplicationCall) {
                 }
                 h2 (classes = "verticalcenter logofont") {
                     +"Developed by: Mike Benz, Devin Fritz, Simon Ritter".uppercase()
+                }
+                h2 (classes = "verticalcenter logofont") {
+                    +"More information: ".uppercase()
+                    a {
+                        href = "https://github.com/MonityChat/Monity-Backend/wiki"
+                        +"$name Github"
+                    }
                 }
             }
         }

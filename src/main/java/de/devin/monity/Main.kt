@@ -1,3 +1,5 @@
+package de.devin.monity
+
 import de.devin.monity.httprouting.AuthRoute
 import de.devin.monity.httprouting.handlePreRoute
 import de.devin.monity.util.html.respondHomePage
@@ -22,7 +24,7 @@ fun main() {
     Monity().boot()
 }
 
-class Monity() {
+class Monity {
 
     private val config = ConfigFileManager()
 
@@ -56,11 +58,11 @@ class Monity() {
     }
 }
 
-class LocationGetter() {
+class LocationGetter {
     fun getLocation(): File {
-        val url = javaClass.protectionDomain.codeSource.location;
-        val jarFileLocation = File(url.path).parentFile;
-        val path = URLDecoder.decode(jarFileLocation.absolutePath, "UTF-8");
-        return File(path);
+        val url = javaClass.protectionDomain.codeSource.location
+        val jarFileLocation = File(url.path).parentFile
+        val path = URLDecoder.decode(jarFileLocation.absolutePath, "UTF-8")
+        return File(path)
     }
 }

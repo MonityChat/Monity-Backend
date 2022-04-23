@@ -1,1 +1,1 @@
-Monity-Backend
+de.devin.monity.Monity-Backend
