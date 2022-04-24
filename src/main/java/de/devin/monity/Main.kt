@@ -1,5 +1,8 @@
 package de.devin.monity
 
+import com.zaxxer.hikari.HikariConfig
+import com.zaxxer.hikari.HikariDataSource
+import de.devin.monity.db.UserDB
 import de.devin.monity.httprouting.AuthRoute
 import de.devin.monity.httprouting.handlePreRoute
 import de.devin.monity.util.html.respondHomePage
@@ -13,6 +16,8 @@ import io.ktor.http.content.*
 import io.ktor.routing.*
 import io.ktor.server.engine.*
 import io.ktor.server.tomcat.*
+import org.jetbrains.exposed.sql.Database
+import org.jetbrains.exposed.sql.transactions.transaction
 import java.io.File
 import java.net.URLDecoder
 
@@ -27,16 +32,19 @@ fun main() {
 class Monity {
 
     private val config = ConfigFileManager()
+    private lateinit var db: Database
 
     fun boot() {
         logInfo("Launching $name ${ConsoleColors.GREEN}v.$version")
-        logInfo("Launching HTTP Server on port ${ConsoleColors.YELLOW}${config.getPort()}")
+        logInfo("Launching HTTP Server on port ${ConsoleColors.YELLOW}${config.getHTTPPort()}")
         runHTTPServer()
-        logInfo("Server running on port ${ConsoleColors.YELLOW}${config.getPort()}")
+        logInfo("Server running on port ${ConsoleColors.YELLOW}${config.getHTTPPort()}")
+        logInfo("Connecting to Database ${ConsoleColors.YELLOW}${config.getSQLHost()}:${config.getSQLPort()}/${config.getSQLDatabase()}")
+        runDatabase()
     }
 
     private fun runHTTPServer() {
-        embeddedServer(Tomcat, port = config.getPort(), host = config.getHost()) {
+        val server = embeddedServer(Tomcat, port = config.getHTTPPort(), host = config.getHTTPHost()) {
             environment.monitor.subscribe(Routing.RoutingCallStarted) {
                 handlePreRoute(it)
             }
@@ -51,10 +59,23 @@ class Monity {
                     respondHomePage(call)
                 }
                 AuthRoute()
-
             }
 
         }.start(wait = false)
+    }
+
+    private fun runDatabase() {
+        val hikariConfig = HikariConfig().apply {
+            username = config.getSQLUser()
+            password = config.getSQLPassword()
+            jdbcUrl = "jdbc:mariadb://${config.getSQLHost()}:${config.getSQLPort()}/${config.getSQLDatabase()}"
+            driverClassName = "org.mariadb.jdbc.Driver"
+            maximumPoolSize = 10
+        }
+        db = Database.connect(HikariDataSource(hikariConfig))
+        transaction {
+            UserDB.load()
+        }
     }
 }
 

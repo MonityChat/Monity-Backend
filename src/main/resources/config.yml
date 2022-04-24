@@ -1,2 +1,10 @@
+#HTTP Server configuration
 host: "127.0.0.1"
-port: 3306
+port: 8808
+
+#SQL Server configuration
+sql_user: "root"
+sql_password: ""
+sql_port: 3306
+sql_host: "localhost"
+sql_db: "monity"
