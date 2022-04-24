@@ -4,6 +4,7 @@ import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import de.devin.monity.db.UserDB
 import de.devin.monity.httprouting.AuthRoute
+import de.devin.monity.httprouting.UserRoute
 import de.devin.monity.httprouting.handlePreRoute
 import de.devin.monity.util.html.respondHomePage
 import filemanagment.filemanagers.ConfigFileManager
@@ -59,6 +60,7 @@ class Monity {
                     respondHomePage(call)
                 }
                 AuthRoute()
+                UserRoute()
             }
 
         }.start(wait = false)

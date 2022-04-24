@@ -33,7 +33,7 @@ suspend fun respondHomePage(call: ApplicationCall) {
                         .imglogo {
                             width: 700px;
                             height: auto;
-                        }
+                        }   
                         .logofont {
                             font-family: josefin-sans, sans-serif;
                             font-weight: 700;
