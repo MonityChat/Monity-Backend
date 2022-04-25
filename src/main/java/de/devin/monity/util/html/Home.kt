@@ -39,6 +39,12 @@ suspend fun respondHomePage(call: ApplicationCall) {
                             font-weight: 700;
                             font-style: normal;
                             text-align: center;
+                            color: white;
+                        }
+                        html {
+                            background-image: url('waves.svg');
+                            background-repeat: no-repeat;
+                            background-size: cover;
                         }
                     """.trimIndent())
                 }

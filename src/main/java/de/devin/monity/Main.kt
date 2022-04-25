@@ -32,7 +32,7 @@ fun main() {
 
 class Monity {
 
-    private val config = ConfigFileManager()
+    private val config = ConfigFileManager
     private lateinit var db: Database
 
     fun boot() {

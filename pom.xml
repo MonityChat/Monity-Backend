@@ -15,7 +15,7 @@
         <kotlin.code.style>official</kotlin.code.style>
         <kotlin.compiler.jvmTarget>1.8</kotlin.compiler.jvmTarget>
         <kotlin.version>1.5.10</kotlin.version>
-        <ktor.version>1.6.8</ktor.version>
+        <ktor.version>1.6.7</ktor.version>
         <logback_version>1.2.5</logback_version>
     </properties>
 
@@ -72,6 +72,7 @@
             <artifactId>mariadb-java-client</artifactId>
             <version>3.0.4</version>
         </dependency>
+
         <!--HikariCP  https://github.com/brettwooldridge/HikariCP -->
         <dependency>
             <groupId>com.zaxxer</groupId>
@@ -84,6 +85,11 @@
             <artifactId>commons-email</artifactId>
             <version>1.5</version>
         </dependency>
+        <dependency>
+            <groupId>org.jetbrains.kotlinx</groupId>
+            <artifactId>kotlinx-html-jvm</artifactId>
+            <version>0.7.5</version>
+        </dependency>
     </dependencies>
 
     <repositories>
@@ -95,6 +101,12 @@
             <id>jitpack.io</id>
             <url>https://jitpack.io</url>
         </repository>
+        <repository>
+            <id>kotlinx-html</id>
+            <name>kotlinx-html</name>
+            <url>https://maven.pkg.jetbrains.space/public/p/kotlinx-html/maven</url>
+        </repository>
+
     </repositories>
 
     <build>

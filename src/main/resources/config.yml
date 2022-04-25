@@ -8,3 +8,9 @@ sql_password: ""
 sql_port: 3306
 sql_host: "localhost"
 sql_db: "monity"
+
+#email config
+email_password: ""
+email_user: ""
+email_smtp_port: 456
+email_hostname: "mail.gmx.net"
