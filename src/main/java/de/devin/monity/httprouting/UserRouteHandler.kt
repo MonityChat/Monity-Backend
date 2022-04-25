@@ -90,6 +90,7 @@ private fun userRegister(username: String, password: String, emailAddress: Strin
 
     val uuid = UUID.randomUUID()
 
+    /*
     transaction {
         UserDB.insert {
             it[name] = username
@@ -100,6 +101,7 @@ private fun userRegister(username: String, password: String, emailAddress: Strin
             it[confirmed] = false
         }
     }
+     */
 
     val id = UUID.randomUUID()
     val link = "http://127.0.0.1:8808/user/confirm?auth=$auth&id=$id&uuid=$uuid.to"

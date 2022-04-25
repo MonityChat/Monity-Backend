@@ -22,7 +22,8 @@ fun emailHTML(url: String, logoCid: String, bgCid: String): String {
                             width: 50%; 
                         }
                         .imglogo {
-                            width: 700px;
+                            display: block;
+                            width: 200px;
                             height: auto;
                         }   
                         .logofont {
@@ -31,14 +32,16 @@ fun emailHTML(url: String, logoCid: String, bgCid: String): String {
                             font-style: normal;
                             text-align: center;
                         }
-                        .waves {
-                            .background-image: cid:$bgCid
+                        html {
+                            background-image: url('cid:$bgCid');
+                            background-repeat: no-repeat;
+                            background-size: cover;
                         }
                     """.trimIndent())
                 }
             }
-            div (classes = "waves"){
-                img(src = "cid:$logoCid", classes = "imglogo verticalcenter")
+            div {
+                //img(src = "cid:$logoCid", classes = "imglogo verticalcenter")
                 h2 (classes = "verticalcenter logofont") {
                     +"Thank you for creating a MONITY account. To complete your verification click the link below"
                 }
