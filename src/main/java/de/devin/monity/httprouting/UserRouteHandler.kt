@@ -88,16 +88,7 @@ private fun userRegister(username: String, password: String, emailAddress: Strin
     val id = UUID.randomUUID().toString()
     val link = "http://127.0.0.1:8808/user/confirm?auth=$auth&id=$id&uuid=$uuid"
 
-    val email = SimpleEmail()
-    email.hostName = "mail.gmx.net"
-    email.setSmtpPort(465)
-    email.setAuthenticator(DefaultAuthenticator("monitychat@gmx.de", "kopsa8-cubsaW-myhnyj"))
-    email.isSSLOnConnect = true
-    email.addTo(emailAddress)
-    email.setFrom("monitychat@gmx.de")
-    email.subject = "Monity confirmation"
-    email.setMsg("To verify your monity account click the following link:\n$link")
-    email.send()
+
 
     userEmailConfirmationMap[id] = uuid
 
