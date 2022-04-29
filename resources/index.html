@@ -1,0 +1,29 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+    <title>capture microphone audio into buffer</title>
+    
+    <script type="text/javascript">
+    
+    var constraints = { audio: true, video: { width: 1280, height: 720 } }; 
+    
+    navigator.mediaDevices.getUserMedia(constraints)
+    .then(function(mediaStream) {
+      var video = document.querySelector('video');
+      video.srcObject = mediaStream;
+      video.onloadedmetadata = function(e) {
+        video.play();
+      };
+    })
+    .catch(function(err) { console.log(err.name + ": " + err.message); });
+    
+    </script>
+    
+    </head>
+    <body>
+    
+        <video width="2840" height="1800" controls>
+    
+      Your browser does not support the video tag.
+    </video>
+    
+    </body>
+    </html>

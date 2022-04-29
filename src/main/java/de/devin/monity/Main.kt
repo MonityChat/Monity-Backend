@@ -13,12 +13,17 @@ import filemanagment.util.logInfo
 import io.ktor.application.*
 import io.ktor.features.*
 import io.ktor.gson.*
+import io.ktor.http.*
 import io.ktor.http.content.*
 import io.ktor.routing.*
 import io.ktor.server.engine.*
 import io.ktor.server.tomcat.*
+import org.apache.logging.log4j.Level
+import org.apache.logging.log4j.core.config.Configurator
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import java.io.File
 import java.net.URLDecoder
 
@@ -44,10 +49,17 @@ class Monity {
         runDatabase()
     }
 
+
     private fun runHTTPServer() {
         val server = embeddedServer(Tomcat, port = config.getHTTPPort(), host = config.getHTTPHost()) {
             environment.monitor.subscribe(Routing.RoutingCallStarted) {
                 handlePreRoute(it)
+            }
+
+            install(CORS) {
+                anyHost()
+                header(HttpHeaders.ContentType)
+                allowCredentials = true
             }
 
             install(ContentNegotiation) {
@@ -67,12 +79,15 @@ class Monity {
     }
 
     private fun runDatabase() {
+        Configurator.setLevel("com.zaxxer.hikari.HikariConfig", Level.OFF)
+
         val hikariConfig = HikariConfig().apply {
             username = config.getSQLUser()
             password = config.getSQLPassword()
             jdbcUrl = "jdbc:mariadb://${config.getSQLHost()}:${config.getSQLPort()}/${config.getSQLDatabase()}"
             driverClassName = "org.mariadb.jdbc.Driver"
             maximumPoolSize = 10
+
         }
         db = Database.connect(HikariDataSource(hikariConfig))
         transaction {

@@ -22,11 +22,3 @@ object UserDB: Table(), DBManager {
     }
 }
 
-class UserDBManager() {
-
-    fun www() {
-    }
-
-}
-
-
