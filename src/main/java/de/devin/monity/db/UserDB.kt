@@ -11,8 +11,8 @@ object UserDB: Table(), DBManager {
     val uuid = varchar("user_uuid", 36)
     val name = varchar("user_name", 48)
     val email = varchar("user_email", 320)
-    val password = varchar("user_password", 256)
-    val salt = varchar("user_salt", 16)
+    val password = varchar("user_password", 64)
+    val salt = varchar("user_salt", 64)
     val confirmed = bool("user_confirmed")
 
     override val primaryKey = PrimaryKey(uuid)

@@ -22,8 +22,6 @@ import org.apache.logging.log4j.Level
 import org.apache.logging.log4j.core.config.Configurator
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.transactions.transaction
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import java.io.File
 import java.net.URLDecoder
 
@@ -59,7 +57,7 @@ class Monity {
             install(CORS) {
                 anyHost()
                 header(HttpHeaders.ContentType)
-                allowCredentials = true
+                header(HttpHeaders.Authorization)
             }
 
             install(ContentNegotiation) {
@@ -76,6 +74,7 @@ class Monity {
             }
 
         }.start(wait = false)
+
     }
 
     private fun runDatabase() {

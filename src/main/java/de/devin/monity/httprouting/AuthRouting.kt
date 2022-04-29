@@ -39,7 +39,7 @@ fun Route.AuthRoute() {
 data class Authorization(val uuid: UUID, val authLevel: AuthLevel)
 
 fun authRoute(call: ApplicationCall): Boolean {
-    val authentication = call.request.headers["authentication"] ?: run { logError("Auth required call without auth header @${call.request.path()} from ${call.request.origin.remoteHost}"); return false }// No authentication header
+    val authentication = call.request.headers["authorization"] ?: run { logError("Auth required call without auth header @${call.request.path()} from ${call.request.origin.remoteHost}"); return false }// No authentication header
     return authenticationMap.contains(authentication)
 }
 

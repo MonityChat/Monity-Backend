@@ -22,7 +22,7 @@ import java.util.*
 private val userEmailConfirmationMap = HashMap<UUID, UserData>()
 
 fun Route.UserRoute() {
-    get("/header") {
+    post("/header") {
         call.request.headers.forEach { s, strings -> run { println(s); println(strings.joinToString()) } }
         call.respondText { "ok" }
     }
@@ -44,7 +44,7 @@ fun Route.UserRoute() {
         if (!authRoute(call)) return@post call.respondText("Insufficient authentication", status = HttpStatusCode.Unauthorized)
         val action = call.parameters["action"] ?: return@post call.respondText("Missing ", status = HttpStatusCode.BadRequest)
 
-        val auth = call.request.headers["authentication"]!!
+        val auth = call.request.headers["authorization"]!!
 
         var error = Error.NONE
         val user: UserData
@@ -79,7 +79,6 @@ private fun confirmUser(id: UUID, uuid: UUID): Error {
     //Dabei wissen wir die ID der Registrierung sowie die UUID des zu registrierenden users.
     //Anhand dieser Daten kann nun der Account registriert werden, falls in der zwischenzeit niemand anders
     //den namen bzw. E-Mail registriert hat.
-
 
     if (!userEmailConfirmationMap.containsKey(id)) {
         return Error.INVALID_CONFIRMATION
@@ -139,7 +138,7 @@ private fun resendEmail(emailAddress: String): Error {
     email.embed(File("$bootLocation/../resources/Logo.png"), "logo")
     email.embed(File("$bootLocation/../resources/waves.png"), "waves")
 
-    var htmlLines = Files.readString(Path.of("$bootLocation/../resources/email.html"))
+    var htmlLines = Files.  readString(Path.of("$bootLocation/../resources/email.html"))
     htmlLines = htmlLines.replace("placeholder:url", link)
 
     email.setHtmlMsg(htmlLines)
