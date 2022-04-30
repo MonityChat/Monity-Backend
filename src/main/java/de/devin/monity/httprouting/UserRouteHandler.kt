@@ -62,7 +62,7 @@ fun Route.UserRoute() {
                 error = resendEmail(user.email)
             }
             "login" -> run {
-                error = login(user)
+                error = login(user, UUID.fromString(auth))
             }
         }
 
