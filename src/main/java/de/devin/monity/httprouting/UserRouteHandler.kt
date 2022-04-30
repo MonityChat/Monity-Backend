@@ -62,7 +62,7 @@ fun Route.UserRoute() {
                 error = resendEmail(user.email)
             }
             "login" -> run {
-
+                error = login(user)
             }
         }
 
@@ -117,11 +117,19 @@ private fun confirmUser(id: UUID, uuid: UUID): Error {
     return Error.NONE
 }
 
-private fun login(user: UserData): Error {
+private fun login(user: UserData, auth: UUID): Error {
 
     if (!UserDB.hasUserName(user.username)) {
         return Error.USER_NOT_FOUND
     }
+
+    val userSaved = UserDB.getByName(user.username)
+
+    if (userSaved.password != user.password) {
+        return Error.INVALID_PASSWORD
+    }
+
+    levelUpAuthKey(auth)
 
     return Error.NONE
 }

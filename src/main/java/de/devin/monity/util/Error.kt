@@ -9,5 +9,6 @@ enum class Error {
     INVALID_CONFIRMATION,
     EMAIL_NOT_FOUND,
     USER_NOT_FOUND,
+    INVALID_PASSWORD
 
 }

@@ -26,6 +26,14 @@ fun handlePreRoute(call: RoutingApplicationCall) {
     }
 }
 
+fun levelUpAuthKey(authKey: UUID) {
+    if (authenticationMap[authKey.toString()] == null) error("Authkey must be included in map")
+    val currentLevel = authenticationMap[authKey.toString()]!!
+    val nextLevel = currentLevel.nextLevel
+
+    if (nextLevel != null) authenticationMap[authKey.toString()] = nextLevel
+}
+
 fun Route.AuthRoute() {
     route("/auth") {
         get {

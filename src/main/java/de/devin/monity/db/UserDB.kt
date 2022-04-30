@@ -42,6 +42,10 @@ object UserDB: Table(), DBManager<UserData, UUID> {
         return transaction { select {name eq userName}.count() > 0 }
     }
 
+    fun getByName(userName: String): UserData {
+        return transaction { select (name eq userName).map { UserData(it[name], it[password], it[salt], it[email], it[uuid]) } }[0]
+    }
+
     override fun insert(obj: UserData) {
         transaction {
             UserDB.insert {
