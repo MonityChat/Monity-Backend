@@ -61,6 +61,9 @@ fun Route.UserRoute() {
             "resend" -> run {
                 error = resendEmail(user.email)
             }
+            "login" -> run {
+
+            }
         }
 
         call.respond(error)
@@ -94,30 +97,32 @@ private fun confirmUser(id: UUID, uuid: UUID): Error {
     val user = userEmailConfirmationMap[id]!!
 
     //jemand hat sich den username weggeschnappt
-    if (transaction { return@transaction UserDB.select(UserDB.name eq user.username).count() > 0}) {
+    if (UserDB.hasUserName(user.username)) {
         userEmailConfirmationMap.remove(id)
         return Error.USERNAME_TAKEN
     }
 
     //jemand hat die email Adresse bereits registriert
-    if (transaction { return@transaction UserDB.select(UserDB.email eq user.email).count() > 0}) {
+    if (UserDB.hasEmail(user.email)) {
         userEmailConfirmationMap.remove(id)
         return Error.EMAIL_ALREADY_IN_USE
     }
 
     //nun den nutzer in die Datenbank eintragen
-    transaction {
-        UserDB.insert {
-            it[UserDB.uuid] = user.uuid
-            it[email] = user.email
-            it[password] = user.password
-            it[salt] = user.salt
-            it[name] = user.username
-            it[confirmed] = true
-        }
-    }
+    UserDB.insert(user)
+
+
     logInfo("Confirmed user ${user.username}")
     userEmailConfirmationMap.remove(id)
+    return Error.NONE
+}
+
+private fun login(user: UserData): Error {
+
+    if (!UserDB.hasUserName(user.username)) {
+        return Error.USER_NOT_FOUND
+    }
+
     return Error.NONE
 }
 
