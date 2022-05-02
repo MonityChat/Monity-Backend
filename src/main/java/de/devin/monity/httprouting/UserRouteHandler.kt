@@ -22,10 +22,6 @@ import java.util.*
 private val userEmailConfirmationMap = HashMap<UUID, UserData>()
 
 fun Route.UserRoute() {
-    post("/header") {
-        call.request.headers.forEach { s, strings -> run { println(s); println(strings.joinToString()) } }
-        call.respondText { "ok" }
-    }
     get ("/user/{action}") {
         val action = call.parameters["action"] ?: return@get call.respondText("Missing ", status = HttpStatusCode.BadRequest)
 
@@ -36,6 +32,18 @@ fun Route.UserRoute() {
 
                 val error = confirmUser(id, uuid)
                 call.respond(error)
+            }
+            "salt" -> run {
+                val username = call.request.queryParameters["username"] ?: return@get call.respondText("Missing parameter username", status = HttpStatusCode.BadRequest)
+
+                if (!UserDB.hasUserName(username)) return@get call.respondText("User not found", status = HttpStatusCode.NotFound)
+                val user = UserDB.getByName(username)
+                call.respond(user.salt)
+            }
+            "privatekey" -> run {
+                val username = call.request.queryParameters["username"] ?: return@get call.respondText("Missing parameter username", status = HttpStatusCode.BadRequest)
+
+                if *
             }
         }
     }
@@ -75,6 +83,8 @@ data class UserData(val username: String,
                     val salt: String,
                     val email: String,
                     val uuid: String)
+
+data class Salt(val salt: String)
 
 private fun confirmUser(id: UUID, uuid: UUID): Error {
 
