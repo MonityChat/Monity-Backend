@@ -54,6 +54,7 @@ object UserDB: Table(), DBManager<UserData, UUID> {
                 it[salt] = obj.salt
                 it[email] = obj.email
                 it[uuid] = obj.uuid
+                it[confirmed] = true
             }
         }
     }

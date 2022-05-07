@@ -38,12 +38,17 @@ fun Route.UserRoute() {
 
                 if (!UserDB.hasUserName(username)) return@get call.respondText("User not found", status = HttpStatusCode.NotFound)
                 val user = UserDB.getByName(username)
-                call.respond(user.salt)
+                call.respond(Salt(user.salt))
             }
             "privatekey" -> run {
                 val username = call.request.queryParameters["username"] ?: return@get call.respondText("Missing parameter username", status = HttpStatusCode.BadRequest)
+            }
 
-                if *
+            "exists" -> run {
+                val username = call.request.queryParameters["username"] ?: return@get call.respondText("Missing parameter username", status = HttpStatusCode.BadRequest)
+
+                if (!UserDB.hasUserName(username)) return@get call.respondText("User not found", status = HttpStatusCode.NotFound)
+                call.respond("OK")
             }
         }
     }
@@ -77,7 +82,6 @@ fun Route.UserRoute() {
         call.respond(error)
     }
 }
-
 data class UserData(val username: String,
                     val password: String,
                     val salt: String,
@@ -165,6 +169,7 @@ private fun resendEmail(emailAddress: String): Error {
     htmlLines = htmlLines.replace("placeholder:url", link)
 
     email.setHtmlMsg(htmlLines)
+    logInfo("Sending verification email to $emailAddress")
     email.send()
     return Error.NONE
 }
