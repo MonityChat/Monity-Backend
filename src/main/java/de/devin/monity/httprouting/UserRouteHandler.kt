@@ -11,7 +11,6 @@ import io.ktor.request.*
 import io.ktor.response.*
 import io.ktor.routing.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.io.File
@@ -20,6 +19,7 @@ import java.nio.file.Path
 import java.util.*
 
 private val userEmailConfirmationMap = HashMap<UUID, UserData>()
+private val userEmailResetMap = HashMap<UUID, UserData>()
 
 fun Route.UserRoute() {
     get ("/user/{action}") {
@@ -77,6 +77,9 @@ fun Route.UserRoute() {
             "login" -> run {
                 error = login(user, UUID.fromString(auth))
             }
+            "reset" -> run {
+                resetPassword(user)
+            }
         }
 
         call.respond(error)
@@ -89,6 +92,35 @@ data class UserData(val username: String,
                     val uuid: String)
 
 data class Salt(val salt: String)
+
+private fun resetPassword(user: UserData): Error {
+
+    if (!UserDB.hasEmail(user.email)) {
+        return Error.EMAIL_NOT_FOUND
+    }
+
+    val id = UUID.randomUUID()
+
+    userEmailResetMap[id] = user
+
+    val link = "http://127.0.0.1:8808/user/confirm?&id=$id&uuid=${user.uuid}"
+
+    val email = htmlEmail()
+    email.addTo(user.email)
+    email.subject = "Monity verification"
+    email.embed(File("$bootLocation/../resources/Logo.png"), "logo")
+    email.embed(File("$bootLocation/../resources/waves.png"), "waves")
+
+    var htmlLines = Files.readString(Path.of("$bootLocation/../resources/email.html"))
+    htmlLines = htmlLines.replace("placeholder:url", link)
+    htmlLines = htmlLines.replace("%content%", "To reset your password click the button below.")
+
+    email.setHtmlMsg(htmlLines)
+    logInfo("Sending reset email to ${user.email}")
+    email.send()
+
+    return Error.NONE
+}
 
 private fun confirmUser(id: UUID, uuid: UUID): Error {
 
@@ -165,8 +197,9 @@ private fun resendEmail(emailAddress: String): Error {
     email.embed(File("$bootLocation/../resources/Logo.png"), "logo")
     email.embed(File("$bootLocation/../resources/waves.png"), "waves")
 
-    var htmlLines = Files.  readString(Path.of("$bootLocation/../resources/email.html"))
+    var htmlLines = Files.readString(Path.of("$bootLocation/../resources/email.html"))
     htmlLines = htmlLines.replace("placeholder:url", link)
+    htmlLines = htmlLines.replace("%content%", "Thank you for creating a Monity account.\nTo complete your registration click the link below.")
 
     email.setHtmlMsg(htmlLines)
     logInfo("Sending verification email to $emailAddress")

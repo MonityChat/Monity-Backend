@@ -14,10 +14,12 @@ import io.ktor.application.*
 import io.ktor.features.*
 import io.ktor.gson.*
 import io.ktor.http.*
+import io.ktor.http.cio.websocket.*
 import io.ktor.http.content.*
 import io.ktor.routing.*
 import io.ktor.server.engine.*
 import io.ktor.server.tomcat.*
+import io.ktor.websocket.*
 import org.apache.logging.log4j.Level
 import org.apache.logging.log4j.core.config.Configurator
 import org.jetbrains.exposed.sql.Database
@@ -58,6 +60,18 @@ class Monity {
                 anyHost()
                 header(HttpHeaders.ContentType)
                 header(HttpHeaders.Authorization)
+            }
+
+            install(WebSockets)
+
+            routing {
+                webSocket("/echo") {
+                    send("Was geht mike")
+                    for (frame in incoming) {
+                        frame as Frame.Text ?: continue
+                        send(frame.readText())
+                    }
+                }
             }
 
             install(ContentNegotiation) {
