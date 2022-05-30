@@ -1,7 +1,7 @@
-package de.devin.monity.httprouting
+package de.devin.monity.network.httprouting
 
 import de.devin.monity.bootLocation
-import de.devin.monity.db.UserDB
+import de.devin.monity.network.db.UserDB
 import de.devin.monity.util.Error
 import de.devin.monity.util.htmlEmail
 import filemanagment.util.logInfo
@@ -22,48 +22,83 @@ private val userEmailConfirmationMap = HashMap<UUID, UserData>()
 private val userEmailResetMap = HashMap<UUID, UserData>()
 
 fun Route.UserRoute() {
-    get ("/user/{action}") {
-        val action = call.parameters["action"] ?: return@get call.respondText("Missing ", status = HttpStatusCode.BadRequest)
+    get("/user/{action}") {
+        val action =
+            call.parameters["action"] ?: return@get call.respondText("Missing ", status = HttpStatusCode.BadRequest)
 
         when (action) {
             "confirm" -> run {
-                val id = UUID.fromString(call.request.queryParameters["id"] ?: return@get call.respondText("Missing parameter id", status = HttpStatusCode.BadRequest))
-                val uuid = UUID.fromString(call.request.queryParameters["uuid"] ?: return@get call.respondText("Missing parameter uuid", status = HttpStatusCode.BadRequest))
+                val id = UUID.fromString(
+                    call.request.queryParameters["id"] ?: return@get call.respondText(
+                        "Missing parameter id",
+                        status = HttpStatusCode.BadRequest
+                    )
+                )
+                val uuid = UUID.fromString(
+                    call.request.queryParameters["uuid"] ?: return@get call.respondText(
+                        "Missing parameter uuid",
+                        status = HttpStatusCode.BadRequest
+                    )
+                )
 
                 val error = confirmUser(id, uuid)
                 call.respond(error)
             }
             "salt" -> run {
-                val username = call.request.queryParameters["username"] ?: return@get call.respondText("Missing parameter username", status = HttpStatusCode.BadRequest)
+                val username = call.request.queryParameters["username"]
+                    ?: return@get call.respondText("Missing parameter username", status = HttpStatusCode.BadRequest)
 
-                if (!UserDB.hasUserName(username)) return@get call.respondText("User not found", status = HttpStatusCode.NotFound)
-                val user = UserDB.getByName(username)
+                val hasUserName = UserDB.hasUserName(username)
+                val hasUserEmail = UserDB.hasEmail(username)
+
+                if (!hasUserEmail && !hasUserName) return@get call.respondText(
+                    "User not found",
+                    status = HttpStatusCode.NotFound
+                )
+
+                val user = if (hasUserName)  {
+                    UserDB.getByName(username)
+                } else {
+                    UserDB.getByEmail(username)
+                }
+
                 call.respond(Salt(user.salt))
             }
             "privatekey" -> run {
-                val username = call.request.queryParameters["username"] ?: return@get call.respondText("Missing parameter username", status = HttpStatusCode.BadRequest)
+                val username = call.request.queryParameters["username"]
+                    ?: return@get call.respondText("Missing parameter username", status = HttpStatusCode.BadRequest)
             }
 
             "exists" -> run {
-                val username = call.request.queryParameters["username"] ?: return@get call.respondText("Missing parameter username", status = HttpStatusCode.BadRequest)
+                val username = call.request.queryParameters["username"]
+                    ?: return@get call.respondText("Missing parameter username", status = HttpStatusCode.BadRequest)
 
-                if (!UserDB.hasUserName(username)) return@get call.respondText("User not found", status = HttpStatusCode.NotFound)
+                if (!UserDB.hasEmail(username) && !UserDB.hasUserName(username)) {
+                    call.respondText("User not found", status = HttpStatusCode.NotFound)
+                }
                 call.respond("OK")
             }
         }
     }
 
     post("/user/{action}") {
-        if (!authRoute(call)) return@post call.respondText("Insufficient authentication", status = HttpStatusCode.Unauthorized)
-        val action = call.parameters["action"] ?: return@post call.respondText("Missing ", status = HttpStatusCode.BadRequest)
+        if (!authRoute(call)) return@post call.respondText(
+            "Insufficient authentication",
+            status = HttpStatusCode.Unauthorized
+        )
+        val action =
+            call.parameters["action"] ?: return@post call.respondText("Missing ", status = HttpStatusCode.BadRequest)
 
         val auth = call.request.headers["authorization"]!!
 
         var error = Error.NONE
         val user: UserData
         try {
-           user = call.receiveOrNull() ?: return@post call.respondText("Invalid body given", status = HttpStatusCode.BadRequest)
-        }catch (e: Exception) {
+            user = call.receiveOrNull() ?: return@post call.respondText(
+                "Invalid body given",
+                status = HttpStatusCode.BadRequest
+            )
+        } catch (e: Exception) {
             e.printStackTrace()
             return@post
         }
@@ -78,20 +113,39 @@ fun Route.UserRoute() {
                 error = login(user, UUID.fromString(auth))
             }
             "reset" -> run {
-                resetPassword(user)
+                error = resetPassword(user)
+            }
+            "resetConfirm" -> run {
+                val id = call.request.queryParameters["id"] ?: return@post call.respondText("Parameter ID missing", status = HttpStatusCode.BadRequest)
+                error = resetPasswordConfirm(UUID.fromString(id), user)
             }
         }
 
         call.respond(error)
     }
 }
-data class UserData(val username: String,
-                    val password: String,
-                    val salt: String,
-                    val email: String,
-                    val uuid: String)
+
+data class UserData(
+    val username: String,
+    val password: String,
+    val salt: String,
+    val email: String,
+    val uuid: String
+)
 
 data class Salt(val salt: String)
+
+private fun resetPasswordConfirm(id: UUID, newUser: UserData): Error {
+
+    if (!userEmailResetMap.containsKey(id)) {
+        return Error.INVALID_RESET_REQUEST
+    }
+
+    UserDB.update(newUser)
+
+    return Error.NONE
+
+}
 
 private fun resetPassword(user: UserData): Error {
 
@@ -99,11 +153,13 @@ private fun resetPassword(user: UserData): Error {
         return Error.EMAIL_NOT_FOUND
     }
 
-    val id = UUID.randomUUID()
+    var id = UUID.randomUUID()
+
+    while (userEmailResetMap.containsKey(id)) id = UUID.randomUUID()
 
     userEmailResetMap[id] = user
 
-    val link = "http://127.0.0.1:8808/user/confirm?&id=$id&uuid=${user.uuid}"
+    val link = "http://127.0.0.1:8808/user/reset?&id=$id&uuid=${user.uuid}"
 
     val email = htmlEmail()
     email.addTo(user.email)
@@ -113,11 +169,20 @@ private fun resetPassword(user: UserData): Error {
 
     var htmlLines = Files.readString(Path.of("$bootLocation/../resources/email.html"))
     htmlLines = htmlLines.replace("placeholder:url", link)
-    htmlLines = htmlLines.replace("%content%", "To reset your password click the button below.")
+    htmlLines = htmlLines.replace("placeholder:content", "To reset your password click the button below.")
+    htmlLines = htmlLines.replace("placeholder:button", "Reset password")
+
+
 
     email.setHtmlMsg(htmlLines)
     logInfo("Sending reset email to ${user.email}")
-    email.send()
+    try {
+        email.send()
+    } catch (e: Exception) {
+        return Error.EMAIL_NOT_FOUND
+    }
+
+    userEmailResetMap[id] = user
 
     return Error.NONE
 }
@@ -165,11 +230,27 @@ private fun confirmUser(id: UUID, uuid: UUID): Error {
 
 private fun login(user: UserData, auth: UUID): Error {
 
-    if (!UserDB.hasUserName(user.username)) {
+
+    val userName = user.username.ifEmpty { null }
+    val email = user.email.ifEmpty { null }
+
+
+    if (userName == null && email == null) {
+        return Error.INVALID_LOGIN_REQUEST
+    }
+
+    if (userName != null && !UserDB.hasUserName(userName)) {
         return Error.USER_NOT_FOUND
     }
 
-    val userSaved = UserDB.getByName(user.username)
+    if (email != null && !UserDB.hasEmail(email)) {
+        return Error.USER_NOT_FOUND
+    }
+
+    val userSaved: UserData = if (userName == null)
+        UserDB.getByEmail(email!!)
+    else
+        UserDB.getByName(userName)
 
     if (userSaved.password != user.password) {
         return Error.INVALID_PASSWORD
@@ -199,7 +280,12 @@ private fun resendEmail(emailAddress: String): Error {
 
     var htmlLines = Files.readString(Path.of("$bootLocation/../resources/email.html"))
     htmlLines = htmlLines.replace("placeholder:url", link)
-    htmlLines = htmlLines.replace("%content%", "Thank you for creating a Monity account.\nTo complete your registration click the link below.")
+    htmlLines = htmlLines.replace(
+        "placeholder:content",
+        "Thank you for creating a Monity account.\nTo complete your registration click the link below."
+    )
+    htmlLines = htmlLines.replace("placeholder:button", "Confirm Email")
+
 
     email.setHtmlMsg(htmlLines)
     logInfo("Sending verification email to $emailAddress")
@@ -238,18 +324,23 @@ private fun userRegister(username: String, password: String, emailAddress: Strin
     //da, wenn er bereits gespeichert wird der Name sowie E-Mail Adresse fest sind und blockiert werden
     //so lange die Registrierung aber nicht abgeschlossen ist, sollen diese noch frei bleiben.
     //Damit wird verhindert, dass namen unnötig blockiert werden
+        val email = htmlEmail()
+        email.addTo(emailAddress)
+        email.subject = "Monity verification"
+        email.embed(File("$bootLocation/../resources/Logo.png"), "logo")
+        email.embed(File("$bootLocation/../resources/waves.png"), "waves")
 
-    val email = htmlEmail()
-    email.addTo(emailAddress)
-    email.subject = "Monity verification"
-    email.embed(File("$bootLocation/../resources/Logo.png"), "logo")
-    email.embed(File("$bootLocation/../resources/waves.png"), "waves")
+        var htmlLines = Files.readString(Path.of("$bootLocation/../resources/email.html"))
+        htmlLines = htmlLines.replace("placeholder:url", link)
 
-    var htmlLines = Files.readString(Path.of("$bootLocation/../resources/email.html"))
-    htmlLines = htmlLines.replace("placeholder:url", link)
+        email.setHtmlMsg(htmlLines)
+    try {
+        logInfo("Send registration email to: $emailAddress")
+        email.send()
+    } catch (e: Exception) {
+        return Error.EMAIL_NOT_FOUND
+    }
 
-    email.setHtmlMsg(htmlLines)
-    email.send()
 
     userEmailConfirmationMap[id] = userData
     return Error.NONE

@@ -1,9 +1,7 @@
-package de.devin.monity.db
+package de.devin.monity.network.db
 
-import de.devin.monity.db.util.DBManager
-import de.devin.monity.httprouting.UserData
-import io.ktor.html.*
-import kotlinx.coroutines.selects.select
+import de.devin.monity.network.db.util.DBManager
+import de.devin.monity.network.httprouting.UserData
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.Table
@@ -46,6 +44,13 @@ object UserDB: Table(), DBManager<UserData, UUID> {
         return transaction { select (name eq userName).map { UserData(it[name], it[password], it[salt], it[email], it[uuid]) } }[0]
     }
 
+    fun getByEmail(email: String): UserData {
+        return transaction { select (UserDB.email eq email).map { UserData(it[name], it[password], it[salt], it[UserDB.email], it[uuid]) } }[0]
+    }
+
+    override fun update(new: UserData) {
+        transaction { update (new) }
+    }
     override fun insert(obj: UserData) {
         transaction {
             UserDB.insert {

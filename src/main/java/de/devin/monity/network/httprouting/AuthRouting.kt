@@ -1,4 +1,4 @@
-package de.devin.monity.httprouting
+package de.devin.monity.network.httprouting
 
 import de.devin.monity.util.AuthLevel
 import filemanagment.util.logError

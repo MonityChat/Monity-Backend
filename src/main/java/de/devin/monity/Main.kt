@@ -2,10 +2,10 @@ package de.devin.monity
 
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
-import de.devin.monity.db.UserDB
-import de.devin.monity.httprouting.AuthRoute
-import de.devin.monity.httprouting.UserRoute
-import de.devin.monity.httprouting.handlePreRoute
+import de.devin.monity.network.db.UserDB
+import de.devin.monity.network.httprouting.AuthRoute
+import de.devin.monity.network.httprouting.UserRoute
+import de.devin.monity.network.httprouting.handlePreRoute
 import de.devin.monity.util.html.respondHomePage
 import filemanagment.filemanagers.ConfigFileManager
 import filemanagment.util.ConsoleColors
@@ -47,6 +47,7 @@ class Monity {
         logInfo("Server running on port ${ConsoleColors.YELLOW}${config.getHTTPPort()}")
         logInfo("Connecting to Database ${ConsoleColors.YELLOW}${config.getSQLHost()}:${config.getSQLPort()}/${config.getSQLDatabase()}")
         runDatabase()
+
     }
 
 
@@ -92,7 +93,9 @@ class Monity {
     }
 
     private fun runDatabase() {
-        Configurator.setLevel("com.zaxxer.hikari.HikariConfig", Level.OFF)
+
+        Configurator.setRootLevel(Level.OFF)
+
 
         val hikariConfig = HikariConfig().apply {
             username = config.getSQLUser()
@@ -100,8 +103,9 @@ class Monity {
             jdbcUrl = "jdbc:mariadb://${config.getSQLHost()}:${config.getSQLPort()}/${config.getSQLDatabase()}"
             driverClassName = "org.mariadb.jdbc.Driver"
             maximumPoolSize = 10
-
         }
+
+
         db = Database.connect(HikariDataSource(hikariConfig))
         transaction {
             UserDB.load()

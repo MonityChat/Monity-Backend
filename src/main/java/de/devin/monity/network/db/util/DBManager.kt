@@ -1,4 +1,4 @@
-package de.devin.monity.db.util
+package de.devin.monity.network.db.util
 
 interface DBManager<TYPE, ID> {
 
@@ -6,5 +6,6 @@ interface DBManager<TYPE, ID> {
     fun has(id: ID): Boolean
     fun get(id: ID): TYPE
     fun insert(obj: TYPE)
+    fun update(new: TYPE)
 
 }
