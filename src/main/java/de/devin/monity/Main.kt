@@ -6,6 +6,7 @@ import de.devin.monity.network.db.UserDB
 import de.devin.monity.network.httprouting.AuthRoute
 import de.devin.monity.network.httprouting.UserRoute
 import de.devin.monity.network.httprouting.handlePreRoute
+import de.devin.monity.network.wsrouting.WebSocketHandler
 import de.devin.monity.util.html.respondHomePage
 import filemanagment.filemanagers.ConfigFileManager
 import filemanagment.util.ConsoleColors
@@ -57,26 +58,30 @@ class Monity {
                 handlePreRoute(it)
             }
 
+            //CORS installation and configuration for internal cross routing
             install(CORS) {
                 anyHost()
                 header(HttpHeaders.ContentType)
                 header(HttpHeaders.Authorization)
             }
 
-            install(WebSockets)
-
-            routing {
-                webSocket("/echo") {
-                    send("Was geht mike")
-                    for (frame in incoming) {
-                        frame as Frame.Text ?: continue
-                        send(frame.readText())
-                    }
-                }
-            }
-
+            //Automatized De/Serialization from incoming outgoing HTTP objects
             install(ContentNegotiation) {
                 gson()
+            }
+
+            //Websockets extensions
+            install(WebSockets)
+
+            //websocket routing
+            routing {
+                webSocket("/monity") {
+                    WebSocketHandler.handleIncomingRequest(this)
+
+                    for (frame in this.incoming) {
+                        val error = WebSocketHandler.handleIncomingContent(frame, this)
+                    }
+                }
             }
 
             routing {
@@ -87,16 +92,10 @@ class Monity {
                 AuthRoute()
                 UserRoute()
             }
-
         }.start(wait = false)
-
     }
 
     private fun runDatabase() {
-
-        Configurator.setRootLevel(Level.OFF)
-
-
         val hikariConfig = HikariConfig().apply {
             username = config.getSQLUser()
             password = config.getSQLPassword()
@@ -105,7 +104,6 @@ class Monity {
             maximumPoolSize = 10
         }
 
-
         db = Database.connect(HikariDataSource(hikariConfig))
         transaction {
             UserDB.load()
@@ -113,6 +111,8 @@ class Monity {
     }
 }
 
+//Must be in class because Java is not able to get a protected domain from static functions such as this would turn into
+//when not in a class
 class LocationGetter {
     fun getLocation(): File {
         val url = javaClass.protectionDomain.codeSource.location

@@ -1,7 +1,10 @@
 package de.devin.monity.network.httprouting
 
 import de.devin.monity.bootLocation
+import de.devin.monity.network.auth.AuthHandler
+import de.devin.monity.network.db.DetailedUserDB
 import de.devin.monity.network.db.UserDB
+import de.devin.monity.network.db.createDefaultUser
 import de.devin.monity.util.Error
 import de.devin.monity.util.htmlEmail
 import filemanagment.util.logInfo
@@ -210,7 +213,7 @@ private fun confirmUser(id: UUID, uuid: UUID): Error {
     //jemand hat sich den username weggeschnappt
     if (UserDB.hasUserName(user.username)) {
         userEmailConfirmationMap.remove(id)
-        return Error.USERNAME_TAKEN
+        return Error.USERNAME_ALREADY_IN_USE
     }
 
     //jemand hat die email Adresse bereits registriert
@@ -221,6 +224,7 @@ private fun confirmUser(id: UUID, uuid: UUID): Error {
 
     //nun den nutzer in die Datenbank eintragen
     UserDB.insert(user)
+    DetailedUserDB.insert(createDefaultUser(UUID.fromString(user.uuid)))
 
 
     logInfo("Confirmed user ${user.username}")
@@ -256,7 +260,7 @@ private fun login(user: UserData, auth: UUID): Error {
         return Error.INVALID_PASSWORD
     }
 
-    levelUpAuthKey(auth)
+    AuthHandler.levelUpAuthKey(auth)
 
     return Error.NONE
 }
@@ -301,7 +305,7 @@ private fun userRegister(username: String, password: String, emailAddress: Strin
         return@transaction UserDB.select((UserDB.name eq username)).count() != 0L
     }
 
-    if (existsUser) return Error.USERNAME_TAKEN
+    if (existsUser) return Error.USERNAME_ALREADY_IN_USE
 
     val existsEmail = transaction {
         return@transaction UserDB.select((UserDB.email eq emailAddress)).count() != 0L
@@ -332,6 +336,11 @@ private fun userRegister(username: String, password: String, emailAddress: Strin
 
         var htmlLines = Files.readString(Path.of("$bootLocation/../resources/email.html"))
         htmlLines = htmlLines.replace("placeholder:url", link)
+        htmlLines = htmlLines.replace(
+            "placeholder:content",
+            "Thank you for creating a Monity account.\nTo complete your registration click the link below."
+        )
+        htmlLines = htmlLines.replace("placeholder:button", "Confirm Email")
 
         email.setHtmlMsg(htmlLines)
     try {

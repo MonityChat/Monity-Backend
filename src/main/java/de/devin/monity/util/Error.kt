@@ -2,15 +2,90 @@ package de.devin.monity.util
 
 enum class Error {
 
+    /**
+     * Occurs when no error occurred
+     */
     NONE,
-    EMAIL_ALREADY_IN_USE,
-    USERNAME_TAKEN,
-    INVALID_ID_UUID_COMBINATION,
-    INVALID_CONFIRMATION,
-    EMAIL_NOT_FOUND,
-    USER_NOT_FOUND,
-    INVALID_PASSWORD,
-    INVALID_RESET_REQUEST,
-    INVALID_LOGIN_REQUEST
 
+    /**
+     * Occurs when an email address is already in use.
+     * For example on registration process
+     */
+    EMAIL_ALREADY_IN_USE,
+
+    /**
+     * Occurs when a username is already in use
+     * For example on registration process
+     */
+    USERNAME_ALREADY_IN_USE,
+
+    /**
+     * Occurs when a verification url is opened and the given ID und UUID are not matching
+     */
+    INVALID_ID_UUID_COMBINATION,
+
+    /**
+     *  Occurs when a verification url is opened with a not existing ID
+     */
+    INVALID_CONFIRMATION,
+
+    /**
+     * Occurs when the given email address is not found
+     */
+    EMAIL_NOT_FOUND,
+
+    /**
+     * Occurs when the given user was not found
+     */
+    USER_NOT_FOUND,
+
+    /**
+     * Occurs when an invalid password is given
+     */
+    INVALID_PASSWORD,
+
+    /**
+     * Occurs when reset password url is opened with an invalid ID
+     */
+    INVALID_RESET_REQUEST,
+
+    /**
+     * Occurs when the email and username in the required login-json are missing
+     */
+    INVALID_LOGIN_REQUEST,
+
+    /**
+     * Occurs when the required UUID in websocket authorization is not matching the required format
+     */
+    INVALID_UUID_FORMAT,
+
+    /**
+     * Occurs when a message is sent via. ws and is not matching the standard JSON format
+     */
+    INVALID_JSON_FORMAT,
+
+    /**
+     * Occurs when an action is performed but the authorization is too low or is invalid
+     */
+    UNAUTHORIZED,
+
+    /**
+     * Occurs when the "action" key is missing in a ws JSON
+     */
+    INVALID_JSON_STRUCTURE,
+
+    /**
+     * Occurs when the registration window timed out and there was no successful registration
+     */
+    IDENTIFICATION_WINDOW_TIMEOUT,
+
+    /**
+     * Occurs when a required parameter is missing
+     */
+    INVALID_JSON_PARAMETER,
+
+    /**
+     * Occurs when the given action does not exist
+     */
+    ACTION_NOT_FOUND
 }

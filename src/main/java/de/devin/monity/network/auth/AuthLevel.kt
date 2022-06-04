@@ -1,4 +1,4 @@
-package de.devin.monity.util
+package de.devin.monity.network.auth
 
 enum class AuthLevel(val nextLevel: AuthLevel?, val weight: Int) {
 
@@ -14,7 +14,7 @@ enum class AuthLevel(val nextLevel: AuthLevel?, val weight: Int) {
     AUTH_LEVEL_USER(AUTH_LEVEL_ADMIN, 2),
 
     /**
-     * Able to login
+     * Able to log in
      */
     AUTH_LEVEL_NONE(AUTH_LEVEL_USER, 1)
 
