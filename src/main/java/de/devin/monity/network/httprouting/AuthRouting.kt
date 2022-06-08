@@ -29,8 +29,10 @@ fun handlePreRoute(call: RoutingApplicationCall) {
 fun Route.AuthRoute() {
     route("/auth") {
         get {
-            val uuid = UUID.randomUUID()
+            var uuid = UUID.randomUUID()
+            while (AuthHandler.isAuthenticated(uuid)) uuid = UUID.randomUUID()
             call.respond(Authorization(uuid, AuthLevel.AUTH_LEVEL_NONE))
+            logInfo("Authenticated UUID: $uuid")
             AuthHandler.addDefaultAuthKey(uuid)
         }
     }

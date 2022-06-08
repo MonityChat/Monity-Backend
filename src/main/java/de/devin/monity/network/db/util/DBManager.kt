@@ -6,6 +6,5 @@ interface DBManager<TYPE, ID> {
     fun has(id: ID): Boolean
     fun get(id: ID): TYPE
     fun insert(obj: TYPE)
-    fun update(new: TYPE)
 
 }

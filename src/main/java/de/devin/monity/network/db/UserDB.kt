@@ -4,13 +4,14 @@ import de.devin.monity.network.db.util.DBManager
 import de.devin.monity.network.httprouting.UserData
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.like
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.util.UUID
 
-object UserDB: Table(), DBManager<UserData, UUID> {
+object UserDB: Table("user"), DBManager<UserData, UUID> {
     val uuid = varchar("user_uuid", 36)
     val name = varchar("user_name", 48)
     val email = varchar("user_email", 320)
@@ -48,8 +49,17 @@ object UserDB: Table(), DBManager<UserData, UUID> {
         return transaction { select (UserDB.email eq email).map { UserData(it[name], it[password], it[salt], it[UserDB.email], it[uuid]) } }[0]
     }
 
-    override fun update(new: UserData) {
-        transaction { update (new) }
+    fun hasEmailOrUser(input: String): Boolean {
+        return hasEmail(input) || hasUserName(input)
+    }
+
+    fun getByUserOrEmail(input: String): UserData {
+        return if (hasUserName(input)) getByName(input)
+        else getByEmail(input)
+    }
+
+    fun getUsersLike(keyWord: String): List<UserData> {
+        return transaction { select(name like "%$keyWord%").map { UserData(it[name], it[password], it[salt], it[email], it[uuid]) } }
     }
     override fun insert(obj: UserData) {
         transaction {

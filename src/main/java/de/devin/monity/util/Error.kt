@@ -1,5 +1,7 @@
 package de.devin.monity.util
 
+import org.json.JSONObject
+
 enum class Error {
 
     /**
@@ -87,5 +89,27 @@ enum class Error {
     /**
      * Occurs when the given action does not exist
      */
-    ACTION_NOT_FOUND
+    ACTION_NOT_FOUND,
+
+    /**
+     * Occurs when a user tries to add a contact when already added
+     */
+    ALREADY_MADE_CONTACT,
+
+    /**
+     * Occurs when a user tries to accept a friend request from a blocked user
+     */
+    USER_BLOCKED_TARGET,
+
+
+    /**
+     * Occurs when a users tries to accept a non-existing friend request
+     */
+    INVALID_FRIEND_ACCEPT_REQUEST;
+
+
+    fun toJson(): JSONObject {
+        return JSONObject("{\"error\":\"$this\"}")
+    }
+
 }

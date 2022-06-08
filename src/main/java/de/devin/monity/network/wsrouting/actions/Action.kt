@@ -10,6 +10,6 @@ interface Action {
     val name: String
     val parameters: List<Parameter>
 
-    fun execute(sender: UUID, parameters: List<Parameter>): JSONObject
+    fun execute(sender: UUID, request: JSONObject): JSONObject
 
 }

@@ -1,7 +1,7 @@
 package de.devin.monity.network.db
 
+import de.devin.monity.Monity
 import de.devin.monity.network.db.util.DBManager
-import de.devin.monity.network.httprouting.UserData
 import de.devin.monity.util.Status
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
@@ -12,20 +12,22 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import java.util.*
 
 
-fun createDefaultUser(uuid: UUID): ComplexUserData {
-    return ComplexUserData("default.png", uuid, "Hi im new here", Status.ONLINE, "I LOVE Monity", System.currentTimeMillis())
+fun createDefaultUser(username: String, uuid: UUID): UserProfile {
+    return UserProfile(username, Monity.dataFolder.absolutePath + "/images/monity/default.png", uuid, "Hi im new here", Status.ONLINE, "I LOVE Monity", System.currentTimeMillis())
 }
 
-data class ComplexUserData(val profileImageLocation: String,
-                           val uuid: UUID,
-                           val description: String,
-                           val status: Status,
-                           val shortStatus: String,
-                           val lastSeen: Long)
+data class UserProfile(val userName: String,
+                       val profileImageLocation: String,
+                       val uuid: UUID,
+                       val description: String,
+                       val status: Status,
+                       val shortStatus: String,
+                       val lastSeen: Long)
 
-object DetailedUserDB: Table(), DBManager<ComplexUserData, UUID> {
+object DetailedUserDB: Table("user_profile"), DBManager<UserProfile, UUID> {
 
-    val profileImageLocation = varchar("user_data_imagie_location", 150)
+    val username = varchar("user_data_name", 48)
+    val profileImageLocation = varchar("user_data_image_location", 150)
     val uuid = varchar("user_data_uuid", 36)
     val description = varchar("user_data_description", 8000)
     val status = varchar("user_data_status", 50)
@@ -42,13 +44,14 @@ object DetailedUserDB: Table(), DBManager<ComplexUserData, UUID> {
         return transaction { select { uuid eq id.toString() }.count() > 0}
     }
 
-    override fun get(id: UUID): ComplexUserData {
-        return transaction { select (uuid eq id.toString()).map { ComplexUserData(it[profileImageLocation], UUID.fromString(it[(uuid)]), it[description], Status.valueOf(it[status]), it[shortStatus], it[lastSeen]) } }[0]
+    override fun get(id: UUID): UserProfile {
+        return transaction { select (uuid eq id.toString()).map { UserProfile(it[username], it[profileImageLocation], UUID.fromString(it[(uuid)]), it[description], Status.valueOf(it[status]), it[shortStatus], it[lastSeen]) } }[0]
     }
 
-    override fun insert(obj: ComplexUserData) {
+    override fun insert(obj: UserProfile) {
         transaction {
             insert {
+                it[username] = obj.userName
                 it[uuid] = obj.uuid.toString()
                 it[description] = obj.description
                 it[status] = obj.status.toString()
@@ -56,12 +59,6 @@ object DetailedUserDB: Table(), DBManager<ComplexUserData, UUID> {
                 it[shortStatus] = obj.shortStatus
                 it[lastSeen] = obj.lastSeen
             }
-        }
-    }
-
-    override fun update(new: ComplexUserData) {
-        transaction {
-            update(new)
         }
     }
 }

@@ -2,11 +2,16 @@ package de.devin.monity
 
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
+import de.devin.monity.network.db.DetailedUserDB
+import de.devin.monity.network.db.UserContactDB
 import de.devin.monity.network.db.UserDB
 import de.devin.monity.network.httprouting.AuthRoute
 import de.devin.monity.network.httprouting.UserRoute
+import de.devin.monity.network.httprouting.UtilRoute
 import de.devin.monity.network.httprouting.handlePreRoute
+import de.devin.monity.network.wsrouting.ActionHandler
 import de.devin.monity.network.wsrouting.WebSocketHandler
+import de.devin.monity.network.wsrouting.WebSocketHandler.send
 import de.devin.monity.util.html.respondHomePage
 import filemanagment.filemanagers.ConfigFileManager
 import filemanagment.util.ConsoleColors
@@ -21,6 +26,7 @@ import io.ktor.routing.*
 import io.ktor.server.engine.*
 import io.ktor.server.tomcat.*
 import io.ktor.websocket.*
+import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import org.apache.logging.log4j.Level
 import org.apache.logging.log4j.core.config.Configurator
 import org.jetbrains.exposed.sql.Database
@@ -33,14 +39,14 @@ const val version = "1.0.0"
 const val name = "Monity"
 
 fun main() {
-    Monity().boot()
+    Monity.boot()
 }
 
-class Monity {
+object Monity {
 
     private val config = ConfigFileManager
     private lateinit var db: Database
-
+    val dataFolder = File(LocationGetter().getLocation().absolutePath + "/../data")
     fun boot() {
         logInfo("Launching $name ${ConsoleColors.GREEN}v.$version")
         logInfo("Launching HTTP Server on port ${ConsoleColors.YELLOW}${config.getHTTPPort()}")
@@ -48,9 +54,8 @@ class Monity {
         logInfo("Server running on port ${ConsoleColors.YELLOW}${config.getHTTPPort()}")
         logInfo("Connecting to Database ${ConsoleColors.YELLOW}${config.getSQLHost()}:${config.getSQLPort()}/${config.getSQLDatabase()}")
         runDatabase()
-
+        ActionHandler.loadDefaultActions()
     }
-
 
     private fun runHTTPServer() {
         val server = embeddedServer(Tomcat, port = config.getHTTPPort(), host = config.getHTTPHost()) {
@@ -76,21 +81,34 @@ class Monity {
             //websocket routing
             routing {
                 webSocket("/monity") {
-                    WebSocketHandler.handleIncomingRequest(this)
+                    try {
+                        WebSocketHandler.handleIncomingRequest(this)
 
-                    for (frame in this.incoming) {
-                        val error = WebSocketHandler.handleIncomingContent(frame, this)
+                        for (frame in this.incoming) {
+                            val returnPacket = WebSocketHandler.handleIncomingContent(frame, this)
+                            send(returnPacket)
+                        }
+                    }catch (e: ClosedReceiveChannelException) {
+                        val user = WebSocketHandler.getUserFrom(this)
+                        logInfo("Closing websocket to User ${user.getUserName()}")
+                        WebSocketHandler.closed(this)
+                    }catch (e: Throwable) {
                     }
                 }
             }
 
             routing {
+                static("assets") {
+                    staticRootFolder = dataFolder
+                    files(".")
+                }
                 resources("html.home")
                 get("/") {
                     respondHomePage(call)
                 }
                 AuthRoute()
                 UserRoute()
+                UtilRoute()
             }
         }.start(wait = false)
     }
@@ -106,7 +124,9 @@ class Monity {
 
         db = Database.connect(HikariDataSource(hikariConfig))
         transaction {
+            DetailedUserDB.load()
             UserDB.load()
+            UserContactDB.load()
         }
     }
 }

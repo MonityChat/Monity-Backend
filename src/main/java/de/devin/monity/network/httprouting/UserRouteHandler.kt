@@ -144,7 +144,8 @@ private fun resetPasswordConfirm(id: UUID, newUser: UserData): Error {
         return Error.INVALID_RESET_REQUEST
     }
 
-    UserDB.update(newUser)
+    TODO("Implement reset password")
+    //UserDB.update(newUser)
 
     return Error.NONE
 
@@ -224,7 +225,7 @@ private fun confirmUser(id: UUID, uuid: UUID): Error {
 
     //nun den nutzer in die Datenbank eintragen
     UserDB.insert(user)
-    DetailedUserDB.insert(createDefaultUser(UUID.fromString(user.uuid)))
+    DetailedUserDB.insert(createDefaultUser(user.username, UUID.fromString(user.uuid)))
 
 
     logInfo("Confirmed user ${user.username}")
@@ -314,15 +315,17 @@ private fun userRegister(username: String, password: String, emailAddress: Strin
 
     //Jeder user hat intern eine UUID, damit sind theoretisch dieselben nutzernamen möglich, dennoch sind diese
     //auch unique um verwechselung im GUI zu verhindern
-    val uuid = UUID.randomUUID()
+    var uuid = UUID.randomUUID()
+    while (UserDB.has(uuid)) uuid = UUID.randomUUID()
 
     val userData = UserData(username, password, salt, emailAddress, uuid.toString())
 
     //nun wird der Link erstellt, den man klicken soll, um seine anmeldung abzuschließen,
     //zu dieser uuid wird der user gespeichert der registriert werden soll mithilfe einer Map
-    val id = UUID.randomUUID()
-    val link = "http://127.0.0.1:8808/user/confirm?&id=$id&uuid=$uuid"
+    var id = UUID.randomUUID()
+    while(userEmailConfirmationMap.containsKey(uuid)) id = UUID.randomUUID()
 
+    val link = "http://127.0.0.1:8808/user/confirm?&id=$id&uuid=$uuid"
 
     //wichtig ist, der User soll jetzt noch nicht in die Datenbank gespeichert werden
     //da, wenn er bereits gespeichert wird der Name sowie E-Mail Adresse fest sind und blockiert werden
