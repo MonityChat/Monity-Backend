@@ -27,6 +27,7 @@ object ActionHandler {
         registerAction(ContactDeclineAction())
         registerAction(ContactAcceptAction())
         registerAction(ContactBlockAction())
+        registerAction(ProfileUpdateAction())
     }
     private fun registerAction(action: Action) {
         registeredActionHandlers += action

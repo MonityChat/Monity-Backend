@@ -107,6 +107,11 @@ enum class Error {
     INVALID_FRIEND_DECLINE_REQUEST,
 
     /**
+     * Occurs when a users tries to send another request to a user
+     */
+    ALREADY_SEND_REQUEST,
+
+    /**
      * Occurs when a users tries to accept a non-existing friend request
      */
     INVALID_FRIEND_ACCEPT_REQUEST;

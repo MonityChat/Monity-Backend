@@ -193,7 +193,7 @@ object WebSocketHandler {
     fun getConnection(uuid: UUID): DefaultWebSocketSession {
         return socketAuthMap[uuid]!!
     }
-    private fun isValidConnection(session: DefaultWebSocketSession): Boolean {
+    fun isValidConnection(session: DefaultWebSocketSession): Boolean {
         return socketAuthMap.containsValue(session)
     }
 }

@@ -1,7 +1,9 @@
 package de.devin.monity.model
 
+import de.devin.monity.network.db.DetailedUserDB
 import de.devin.monity.network.db.UserProfile
 import de.devin.monity.network.httprouting.UserData
+import de.devin.monity.util.Status
 import de.devin.monity.util.notifications.Notification
 import de.devin.monity.util.notifications.send
 import io.ktor.http.cio.websocket.*
@@ -16,6 +18,10 @@ class OnlineUser(userData: UserData, userProfile: UserProfile, socketSession: De
         runBlocking {
             socketSession.send(notification)
         }
+    }
+
+    fun setStatus(status: Status) {
+        DetailedUserDB.setStatus(getUUID(), status)
     }
 
     override fun sendMessageTo(to: OnlineUser, message: Message) {

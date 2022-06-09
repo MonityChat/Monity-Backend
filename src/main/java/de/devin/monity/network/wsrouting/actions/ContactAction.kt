@@ -29,8 +29,12 @@ class ContactAddAction: Action {
             return Error.ALREADY_MADE_CONTACT.toJson()
         }
 
+        if (UserContactDB.sendRequest(sender, targetUUID)) {
+            return Error.ALREADY_SEND_REQUEST.toJson()
+        }
+
         if (UserContactDB.sendRequest(targetUUID, sender)) {
-            UserContactDB.updateStatus(sender, targetUUID, FriendStatus.ACCEPTED)
+            UserContactDB.updateStatus(targetUUID, sender, FriendStatus.ACCEPTED)
             UserHandler.sendNotificationIfOnline(targetUUID, ContactAddNotification(senderUserProfile))
             return toJSON(senderUserProfile)
         }

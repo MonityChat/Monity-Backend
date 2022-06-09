@@ -17,6 +17,10 @@ open class User(private val userData: UserData, private val userProfile: UserPro
         return userData.username
     }
 
+    fun getProfile(): UserProfile {
+        return userProfile
+    }
+
     fun getEmail(): String {
         return userData.email
     }

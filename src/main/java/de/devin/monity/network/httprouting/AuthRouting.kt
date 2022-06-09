@@ -39,15 +39,19 @@ fun Route.AuthRoute() {
 }
 
 fun authRoute(call: ApplicationCall): Boolean {
+    return authRoute(call, AuthLevel.AUTH_LEVEL_NONE)
+}
+
+
+fun authRoute(call: ApplicationCall, level: AuthLevel): Boolean {
     val authentication = call.request.headers["authorization"] ?: run { logError("Auth required call without auth header @${call.request.path()} from ${call.request.origin.remoteHost}"); return false }// No authentication header
 
     val uuid: UUID
     try {
-         uuid = UUID.fromString(authentication)
+        uuid = UUID.fromString(authentication)
     }catch (e: Exception) {
         return false
     }
 
-    return AuthHandler.isAuthenticated(uuid)
+    return AuthHandler.isAuthenticated(uuid) && AuthHandler.getLevel(uuid).weight >= level.weight
 }
-
