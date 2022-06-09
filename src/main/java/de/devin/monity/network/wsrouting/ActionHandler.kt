@@ -16,9 +16,17 @@ object ActionHandler {
     private val registeredActionHandlers = ArrayList<Action>()
 
     fun loadDefaultActions() {
+        //Get Data Actions
         registerAction(UserSelfDataAction())
+        registerAction(ContactGetAction())
+        registerAction(ContactGetOpenRequest())
+
+        //Contact Actions
         registerAction(ContactSearchAction())
         registerAction(ContactAddAction())
+        registerAction(ContactDeclineAction())
+        registerAction(ContactAcceptAction())
+        registerAction(ContactBlockAction())
     }
     private fun registerAction(action: Action) {
         registeredActionHandlers += action

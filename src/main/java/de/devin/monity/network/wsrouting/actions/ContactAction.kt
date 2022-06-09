@@ -25,19 +25,17 @@ class ContactAddAction: Action {
 
         val senderUserProfile = DetailedUserDB.get(sender)
 
-        if (UserContactDB.has(sender)) {
-            val friendData = UserContactDB.get(sender)
-            if (friendData.any { it.to == targetUUID }) return Error.ALREADY_MADE_CONTACT.toJson()
+        if (UserContactDB.areFriends(sender, targetUUID)) {
+            return Error.ALREADY_MADE_CONTACT.toJson()
+        }
 
-            if (friendData.any { it.to == targetUUID && it.status == FriendStatus.PENDING }) {
-                UserContactDB.updateStatus(sender, targetUUID, FriendStatus.ACCEPTED)
-                UserHandler.sendNotificationIfOnline(targetUUID, ContactAddNotification(senderUserProfile))
-                return toJSON(senderUserProfile)
-            }
+        if (UserContactDB.sendRequest(targetUUID, sender)) {
+            UserContactDB.updateStatus(sender, targetUUID, FriendStatus.ACCEPTED)
+            UserHandler.sendNotificationIfOnline(targetUUID, ContactAddNotification(senderUserProfile))
+            return toJSON(senderUserProfile)
         }
 
         val friendData = FriendData(sender, targetUUID, FriendStatus.PENDING)
-
         UserContactDB.insert(listOf(friendData))
 
         UserHandler.sendNotificationIfOnline(targetUUID, ContactAddRequestNotification(senderUserProfile))
@@ -53,19 +51,91 @@ class ContactAcceptAction: Action {
         get() = listOf(Parameter("target"))
 
     override fun execute(sender: UUID, request: JSONObject): JSONObject {
-
+        //sender nimmt anfrage von target an
         val target = request.getString("target")
         val targetUUID = UUID.fromString(target)
 
-        if (UserContactDB.has(sender)) {
-            val friendData = UserContactDB.get(sender)
-            if (friendData.any { it.to == targetUUID && it.status == FriendStatus.ACCEPTED}) return Error.ALREADY_MADE_CONTACT.toJson()
-            if (friendData.any { it.to == targetUUID && it.status == FriendStatus.BLOCKED}) return Error.USER_BLOCKED_TARGET.toJson()
-        } else {
-            return Error.INVALID_FRIEND_ACCEPT_REQUEST.toJson()
+        if (UserContactDB.areFriends(targetUUID, sender)) {
+            return Error.ALREADY_MADE_CONTACT.toJson()
         }
-        
+
+        if (UserContactDB.hasBlocked(sender, targetUUID)) {
+            return Error.USER_BLOCKED_TARGET.toJson()
+        }
+
+        UserHandler.sendNotificationIfOnline(targetUUID, ContactAddNotification(DetailedUserDB.get(sender)))
+        UserContactDB.updateStatus(targetUUID, sender, FriendStatus.ACCEPTED)
+        return toJSON(DetailedUserDB.get(targetUUID))
+    }
+}
+
+class ContactDeclineAction: Action {
+    override val name: String
+        get() = "contact:decline"
+    override val parameters: List<Parameter>
+        get() = listOf(Parameter("target"))
+
+    override fun execute(sender: UUID, request: JSONObject): JSONObject {
+        //sender lehnt anfrage von target ab
+        val target = request.getString("target")
+        val targetUUID = UUID.fromString(target)
+
+        if (UserContactDB.areFriends(sender, targetUUID)) {
+            return Error.ALREADY_MADE_CONTACT.toJson()
+        }
+
+        UserContactDB.removeRequest(targetUUID, sender)
         return Error.NONE.toJson()
+    }
+}
+
+class ContactBlockAction: Action {
+    override val name: String
+        get() = "contact:block"
+    override val parameters: List<Parameter>
+        get() = listOf(Parameter("target"))
+
+    override fun execute(sender: UUID, request: JSONObject): JSONObject {
+        val target = request.getString("target")
+        val targetUUID = UUID.fromString(target)
+
+        if (UserContactDB.hasBlocked(sender, targetUUID)) {
+            return Error.USER_BLOCKED_TARGET.toJson()
+        }
+
+        UserContactDB.updateStatus(sender, targetUUID, FriendStatus.BLOCKED)
+        return Error.NONE.toJson()
+    }
+}
+
+class ContactGetAction: Action {
+
+    override val name: String
+        get() = "contact:get"
+    override val parameters: List<Parameter>
+        get() = listOf()
+
+    override fun execute(sender: UUID, request: JSONObject): JSONObject {
+        val contacts = UserContactDB.getContactsFrom(sender)
+
+        val contactsArray = JSONArray()
+        contacts.forEach { contactsArray.put(toJSON(DetailedUserDB.get(it))) }
+        return JSONObject().put("contacts", contactsArray)
+    }
+}
+
+class ContactGetOpenRequest: Action {
+    override val name: String
+        get() = "contact:get:request"
+    override val parameters: List<Parameter>
+        get() = listOf()
+
+    override fun execute(sender: UUID, request: JSONObject): JSONObject {
+        val requests = UserContactDB.getOpenRequestsFrom(sender)
+
+        val requestsArray = JSONArray()
+        requests.forEach { requestsArray.put(toJSON(DetailedUserDB.get(it))) }
+        return JSONObject().put("requests", requestsArray)
     }
 }
 

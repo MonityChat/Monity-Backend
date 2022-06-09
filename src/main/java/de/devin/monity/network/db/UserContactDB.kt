@@ -28,6 +28,39 @@ object UserContactDB: Table("user_contact"), DBManager<List<FriendData>, UUID> {
         return transaction { select(root eq id.toString()).map { FriendData(UUID.fromString(it[root]), UUID.fromString(it[to]), FriendStatus.valueOf(it[status])) } }
     }
 
+    fun getContactsFrom(id: UUID): List<UUID> {
+        return get(id).filter { it.status == FriendStatus.ACCEPTED }.map { it.from }
+    }
+
+    fun removeRequest(from: UUID, to: UUID) {
+        transaction {
+            deleteWhere {
+                (root eq from.toString()) and (UserContactDB.to eq to.toString())
+            }
+        }
+    }
+
+    fun getOpenRequestsFrom(id: UUID): List<UUID> {
+        return get(id).filter { it.status == FriendStatus.PENDING }.map { it.from }
+    }
+
+    fun areFriends(from: UUID, to: UUID): Boolean {
+        return get(from).any { it.to == to && it.status == FriendStatus.ACCEPTED} ||
+                get(to).any { it.to == from && it.status == FriendStatus.ACCEPTED}
+    }
+
+    fun hasBlocked(from: UUID, to: UUID): Boolean {
+        return get(from).any { it.from == from && it.to == to && it.status == FriendStatus.BLOCKED}
+    }
+
+    fun sendRequest(from: UUID, to: UUID): Boolean {
+        return get(from).any { it.from == from && it.to == to && it.status == FriendStatus.PENDING}
+    }
+
+    fun hasRequest(user: UUID, from: UUID): Boolean {
+        return get(from).any { it.from == from && it.to == user && it.status == FriendStatus.PENDING}
+    }
+
     override fun insert(obj: List<FriendData>) {
         for (friendData in obj) {
             transaction {

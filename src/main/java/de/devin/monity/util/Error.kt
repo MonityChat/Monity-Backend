@@ -101,6 +101,10 @@ enum class Error {
      */
     USER_BLOCKED_TARGET,
 
+    /**
+     * Occurs when a users tries to accept a non-existing friend request
+     */
+    INVALID_FRIEND_DECLINE_REQUEST,
 
     /**
      * Occurs when a users tries to accept a non-existing friend request
