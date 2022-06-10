@@ -12,12 +12,12 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import java.util.UUID
 
 object UserDB: Table("user"), DBManager<UserData, UUID> {
-    val uuid = varchar("user_uuid", 36)
-    val name = varchar("user_name", 48)
-    val email = varchar("user_email", 320)
-    val password = varchar("user_password", 64)
-    val salt = varchar("user_salt", 64)
-    val confirmed = bool("user_confirmed")
+    private val uuid = varchar("user_uuid", 36)
+    private val name = varchar("user_name", 48)
+    private val email = varchar("user_email", 320)
+    private val password = varchar("user_password", 64)
+    private val salt = varchar("user_salt", 64)
+    private val confirmed = bool("user_confirmed")
 
     override val primaryKey = PrimaryKey(uuid)
 

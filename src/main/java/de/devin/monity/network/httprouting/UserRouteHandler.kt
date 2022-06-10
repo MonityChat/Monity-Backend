@@ -302,15 +302,10 @@ private fun userRegister(username: String, password: String, emailAddress: Strin
 
     //Damit sich ein Nutzer registrieren kann, darf dieser nutzername sowohl als auch E-Mail
     // nicht bereits verwendet worden sein
-    val existsUser = transaction {
-        return@transaction UserDB.select((UserDB.name eq username)).count() != 0L
-    }
-
+    val existsUser = UserDB.hasUserName(username)
     if (existsUser) return Error.USERNAME_ALREADY_IN_USE
 
-    val existsEmail = transaction {
-        return@transaction UserDB.select((UserDB.email eq emailAddress)).count() != 0L
-    }
+    val existsEmail = UserDB.hasEmail(emailAddress)
     if (existsEmail) return Error.EMAIL_ALREADY_IN_USE
 
     //Jeder user hat intern eine UUID, damit sind theoretisch dieselben nutzernamen möglich, dennoch sind diese

@@ -23,14 +23,14 @@ data class UserProfile(val userName: String,
 
 object DetailedUserDB: Table("user_profile"), DBManager<UserProfile, UUID> {
 
-    val username = varchar("user_data_name", 48)
-    val profileImageLocation = varchar("user_data_image_location", 150)
-    val uuid = varchar("user_data_uuid", 36)
-    val description = varchar("user_data_description", 8000)
-    val status = varchar("user_data_status", 50)
-    val lastSeen = long("user_data_last_seen")
-    val shortStatus = varchar("user_data_short_status", 128)
-    val preferredStatus = varchar("user_data_preferred_status", 50)
+    private val username = varchar("user_data_name", 48)
+    private val profileImageLocation = varchar("user_data_image_location", 150)
+    private val uuid = varchar("user_data_uuid", 36)
+    private val description = varchar("user_data_description", 8000)
+    private val status = varchar("user_data_status", 50)
+    private val lastSeen = long("user_data_last_seen")
+    private val shortStatus = varchar("user_data_short_status", 128)
+    private val preferredStatus = varchar("user_data_preferred_status", 50)
 
     override val primaryKey = PrimaryKey(uuid)
 

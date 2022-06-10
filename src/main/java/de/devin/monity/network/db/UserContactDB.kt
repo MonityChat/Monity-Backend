@@ -38,6 +38,8 @@ object UserContactDB: Table("user_contact"), DBManager<List<FriendData>, UUID> {
                 (root eq from.toString()) and (UserContactDB.to eq to.toString())
             }
         }
+
+
     }
 
     fun getOpenRequestsFrom(id: UUID): List<UUID> {
