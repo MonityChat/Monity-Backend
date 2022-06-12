@@ -1,6 +1,6 @@
 package de.devin.monity.model
 
-import de.devin.monity.network.db.UserProfile
+import de.devin.monity.network.db.user.UserProfile
 import de.devin.monity.network.httprouting.UserData
 import io.ktor.http.cio.websocket.*
 import java.util.UUID

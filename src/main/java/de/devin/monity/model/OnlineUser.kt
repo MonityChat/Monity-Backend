@@ -1,7 +1,7 @@
 package de.devin.monity.model
 
-import de.devin.monity.network.db.DetailedUserDB
-import de.devin.monity.network.db.UserProfile
+import de.devin.monity.network.db.user.DetailedUserDB
+import de.devin.monity.network.db.user.UserProfile
 import de.devin.monity.network.httprouting.UserData
 import de.devin.monity.util.Status
 import de.devin.monity.util.notifications.Notification

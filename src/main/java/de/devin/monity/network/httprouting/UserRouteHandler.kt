@@ -2,9 +2,9 @@ package de.devin.monity.network.httprouting
 
 import de.devin.monity.bootLocation
 import de.devin.monity.network.auth.AuthHandler
-import de.devin.monity.network.db.DetailedUserDB
-import de.devin.monity.network.db.UserDB
-import de.devin.monity.network.db.createDefaultUser
+import de.devin.monity.network.db.user.DetailedUserDB
+import de.devin.monity.network.db.user.UserDB
+import de.devin.monity.network.db.user.createDefaultUser
 import de.devin.monity.util.Error
 import de.devin.monity.util.htmlEmail
 import filemanagment.util.logInfo
@@ -13,9 +13,6 @@ import io.ktor.http.*
 import io.ktor.request.*
 import io.ktor.response.*
 import io.ktor.routing.*
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.select
-import org.jetbrains.exposed.sql.transactions.transaction
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path

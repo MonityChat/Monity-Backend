@@ -1,9 +1,9 @@
 package de.devin.monity.network.wsrouting.actions
 
-import de.devin.monity.network.db.DetailedUserDB
-import de.devin.monity.network.db.FriendData
-import de.devin.monity.network.db.UserContactDB
-import de.devin.monity.network.db.UserDB
+import de.devin.monity.network.db.user.DetailedUserDB
+import de.devin.monity.network.db.user.FriendData
+import de.devin.monity.network.db.user.UserContactDB
+import de.devin.monity.network.db.user.UserDB
 import de.devin.monity.util.toJSON
 import org.json.JSONArray
 import org.json.JSONObject

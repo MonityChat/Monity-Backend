@@ -1,6 +1,6 @@
 package de.devin.monity.network.wsrouting.actions
 
-import de.devin.monity.network.db.DetailedUserDB
+import de.devin.monity.network.db.user.DetailedUserDB
 import de.devin.monity.util.toJSON
 import filemanagment.util.logInfo
 import org.json.JSONObject

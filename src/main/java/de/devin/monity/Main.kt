@@ -2,15 +2,14 @@ package de.devin.monity
 
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
-import de.devin.monity.network.db.DetailedUserDB
-import de.devin.monity.network.db.UserContactDB
-import de.devin.monity.network.db.UserDB
+import de.devin.monity.network.db.user.DetailedUserDB
+import de.devin.monity.network.db.user.UserContactDB
+import de.devin.monity.network.db.user.UserDB
 import de.devin.monity.network.httprouting.*
 import de.devin.monity.network.wsrouting.ActionHandler
 import de.devin.monity.network.wsrouting.WebSocketHandler
 import de.devin.monity.network.wsrouting.WebSocketHandler.send
 import de.devin.monity.util.Status
-import de.devin.monity.util.dataconnectors.UserHandler
 import de.devin.monity.util.html.respondHomePage
 import filemanagment.filemanagers.ConfigFileManager
 import filemanagment.util.ConsoleColors
@@ -19,16 +18,12 @@ import io.ktor.application.*
 import io.ktor.features.*
 import io.ktor.gson.*
 import io.ktor.http.*
-import io.ktor.http.cio.websocket.*
 import io.ktor.http.content.*
 import io.ktor.routing.*
 import io.ktor.server.engine.*
 import io.ktor.server.tomcat.*
 import io.ktor.websocket.*
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
-import kotlinx.coroutines.runBlocking
-import org.apache.logging.log4j.Level
-import org.apache.logging.log4j.core.config.Configurator
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.io.File

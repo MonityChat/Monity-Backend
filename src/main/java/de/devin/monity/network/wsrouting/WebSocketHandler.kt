@@ -1,10 +1,9 @@
 package de.devin.monity.network.wsrouting
 
-import com.google.gson.Gson
 import de.devin.monity.model.OnlineUser
 import de.devin.monity.network.auth.AuthHandler
 import de.devin.monity.network.auth.AuthLevel
-import de.devin.monity.network.db.UserDB
+import de.devin.monity.network.db.user.UserDB
 import de.devin.monity.util.Error
 import de.devin.monity.util.SimpleJSONReader
 import de.devin.monity.util.dataconnectors.UserHandler

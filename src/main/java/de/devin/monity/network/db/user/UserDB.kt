@@ -1,4 +1,4 @@
-package de.devin.monity.network.db
+package de.devin.monity.network.db.user
 
 import de.devin.monity.network.db.util.DBManager
 import de.devin.monity.network.httprouting.UserData
@@ -22,7 +22,7 @@ object UserDB: Table("user"), DBManager<UserData, UUID> {
     override val primaryKey = PrimaryKey(uuid)
 
     override fun load() {
-        SchemaUtils.create(UserDB)
+        SchemaUtils.createMissingTablesAndColumns(UserDB)
     }
 
     override fun has(id: UUID): Boolean {
@@ -38,7 +38,7 @@ object UserDB: Table("user"), DBManager<UserData, UUID> {
     }
 
     fun hasUserName(userName: String): Boolean {
-        return transaction { select {name eq userName}.count() > 0 }
+        return transaction { select { name eq userName}.count() > 0 }
     }
 
     fun getByName(userName: String): UserData {

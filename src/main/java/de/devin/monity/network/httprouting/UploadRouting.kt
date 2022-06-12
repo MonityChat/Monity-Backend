@@ -1,7 +1,7 @@
 package de.devin.monity.network.httprouting
 
 import de.devin.monity.network.auth.AuthLevel
-import de.devin.monity.network.db.DetailedUserDB
+import de.devin.monity.network.db.user.DetailedUserDB
 import de.devin.monity.util.FileManager
 import de.devin.monity.util.validUUID
 import io.ktor.application.*

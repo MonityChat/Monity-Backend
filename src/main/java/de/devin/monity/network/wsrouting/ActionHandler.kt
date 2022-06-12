@@ -1,12 +1,10 @@
 package de.devin.monity.network.wsrouting
 
-import de.devin.monity.network.db.UserDB
+import de.devin.monity.network.db.user.UserDB
 import de.devin.monity.network.wsrouting.actions.*
 import de.devin.monity.util.Error
-import de.devin.monity.util.toJSON
 import de.devin.monity.util.validUUID
 import filemanagment.util.logInfo
-import org.jetbrains.exposed.sql.exists
 import org.json.JSONObject
 import java.util.*
 import kotlin.collections.ArrayList

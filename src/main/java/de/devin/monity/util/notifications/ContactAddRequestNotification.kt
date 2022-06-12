@@ -1,6 +1,6 @@
 package de.devin.monity.util.notifications
 
-import de.devin.monity.network.db.UserProfile
+import de.devin.monity.network.db.user.UserProfile
 import de.devin.monity.util.toJSON
 import org.json.JSONObject
 import java.util.*

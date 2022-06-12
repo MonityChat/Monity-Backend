@@ -1,8 +1,7 @@
-package de.devin.monity.network.db
+package de.devin.monity.network.db.user
 
 import de.devin.monity.network.db.util.DBManager
 import de.devin.monity.util.FriendStatus
-import filemanagment.util.logInfo
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -17,7 +16,7 @@ object UserContactDB: Table("user_contact"), DBManager<List<FriendData>, UUID> {
     private val status = varchar("friend_status", 50)
 
     override fun load() {
-        SchemaUtils.create(UserContactDB)
+        SchemaUtils.createMissingTablesAndColumns(UserContactDB)
     }
 
     override fun has(id: UUID): Boolean {
@@ -38,8 +37,6 @@ object UserContactDB: Table("user_contact"), DBManager<List<FriendData>, UUID> {
                 (root eq from.toString()) and (UserContactDB.to eq to.toString())
             }
         }
-
-
     }
 
     fun getOpenRequestsFrom(id: UUID): List<UUID> {

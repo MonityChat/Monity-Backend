@@ -1,4 +1,4 @@
-package de.devin.monity.network.db
+package de.devin.monity.network.db.user
 
 import de.devin.monity.network.db.util.DBManager
 import de.devin.monity.util.Status
@@ -35,7 +35,7 @@ object DetailedUserDB: Table("user_profile"), DBManager<UserProfile, UUID> {
     override val primaryKey = PrimaryKey(uuid)
 
     override fun load() {
-        SchemaUtils.create(DetailedUserDB)
+        SchemaUtils.createMissingTablesAndColumns(DetailedUserDB)
     }
 
     override fun has(id: UUID): Boolean {
@@ -54,7 +54,7 @@ object DetailedUserDB: Table("user_profile"), DBManager<UserProfile, UUID> {
 
     fun setStatus(user: UUID, status: Status) {
         transaction {
-            update({uuid eq user.toString()}) { it[DetailedUserDB.status] = status.toString() }
+            update({ uuid eq user.toString()}) { it[DetailedUserDB.status] = status.toString() }
         }
     }
 
@@ -68,7 +68,7 @@ object DetailedUserDB: Table("user_profile"), DBManager<UserProfile, UUID> {
 
     fun updateProfile(user: UUID, profile: UserProfile) {
         transaction {
-            update({uuid eq user.toString()}) {
+            update({ uuid eq user.toString()}) {
                 it[description] = profile.description
                 it[shortStatus] = profile.shortStatus
                 it[profileImageLocation] = profile.profileImageLocation

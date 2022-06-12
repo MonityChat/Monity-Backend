@@ -2,8 +2,8 @@ package de.devin.monity.util.dataconnectors
 
 import de.devin.monity.model.OnlineUser
 import de.devin.monity.model.User
-import de.devin.monity.network.db.DetailedUserDB
-import de.devin.monity.network.db.UserDB
+import de.devin.monity.network.db.user.DetailedUserDB
+import de.devin.monity.network.db.user.UserDB
 import de.devin.monity.network.wsrouting.WebSocketHandler
 import de.devin.monity.util.notifications.Notification
 import java.util.UUID
