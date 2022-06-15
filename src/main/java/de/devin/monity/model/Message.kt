@@ -1,4 +1,6 @@
 package de.devin.monity.model
 
-class Message {
+import java.util.UUID
+
+class Message(val content: String, val sender: UUID, val sent: Long, val embed: UUID?) {
 }

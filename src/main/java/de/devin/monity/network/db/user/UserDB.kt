@@ -30,7 +30,7 @@ object UserDB: Table("user"), DBManager<UserData, UUID> {
     }
 
     override fun get(id: UUID): UserData {
-        return transaction { select (uuid eq id.toString()).map { UserData(it[name], it[password], it[salt], it[email], id.toString()) } }[0]
+        return transaction { select (uuid eq id.toString()).map { UserData(it[name], it[password], it[salt], it[email], id) } }[0]
     }
 
     fun hasEmail(email: String): Boolean {
@@ -42,11 +42,11 @@ object UserDB: Table("user"), DBManager<UserData, UUID> {
     }
 
     fun getByName(userName: String): UserData {
-        return transaction { select (name eq userName).map { UserData(it[name], it[password], it[salt], it[email], it[uuid]) } }[0]
+        return transaction { select (name eq userName).map { UserData(it[name], it[password], it[salt], it[email], UUID.fromString(it[uuid])) } }[0]
     }
 
     fun getByEmail(email: String): UserData {
-        return transaction { select (UserDB.email eq email).map { UserData(it[name], it[password], it[salt], it[UserDB.email], it[uuid]) } }[0]
+        return transaction { select (UserDB.email eq email).map { UserData(it[name], it[password], it[salt], it[UserDB.email], UUID.fromString(it[uuid])) } }[0]
     }
 
     fun hasEmailOrUser(input: String): Boolean {
@@ -59,7 +59,7 @@ object UserDB: Table("user"), DBManager<UserData, UUID> {
     }
 
     fun getUsersLike(keyWord: String): List<UserData> {
-        return transaction { select(name like "%$keyWord%").map { UserData(it[name], it[password], it[salt], it[email], it[uuid]) } }
+        return transaction { select(name like "%$keyWord%").map { UserData(it[name], it[password], it[salt], it[email], UUID.fromString(it[uuid])) } }
     }
     override fun insert(obj: UserData) {
         transaction {
@@ -68,7 +68,7 @@ object UserDB: Table("user"), DBManager<UserData, UUID> {
                 it[password] = obj.password
                 it[salt] = obj.salt
                 it[email] = obj.email
-                it[uuid] = obj.uuid
+                it[uuid] = obj.uuid.toString()
                 it[confirmed] = true
             }
         }

@@ -130,7 +130,7 @@ data class UserData(
     val password: String,
     val salt: String,
     val email: String,
-    val uuid: String
+    val uuid: UUID
 )
 
 data class Salt(val salt: String)
@@ -200,7 +200,7 @@ private fun confirmUser(id: UUID, uuid: UUID): Error {
     }
 
     //id und uuid passen nicht zusammen, unwahrscheinlich aber kann durch einen falschen Link vorkommen
-    if (userEmailConfirmationMap[id]!!.uuid != uuid.toString()) {
+    if (userEmailConfirmationMap[id]!!.uuid != uuid) {
         userEmailConfirmationMap.remove(id)
         return Error.INVALID_ID_UUID_COMBINATION
     }
@@ -222,7 +222,7 @@ private fun confirmUser(id: UUID, uuid: UUID): Error {
 
     //nun den nutzer in die Datenbank eintragen
     UserDB.insert(user)
-    DetailedUserDB.insert(createDefaultUser(user.username, UUID.fromString(user.uuid)))
+    DetailedUserDB.insert(createDefaultUser(user.username, (user.uuid)))
 
 
     logInfo("Confirmed user ${user.username}")
@@ -310,7 +310,7 @@ private fun userRegister(username: String, password: String, emailAddress: Strin
     var uuid = UUID.randomUUID()
     while (UserDB.has(uuid)) uuid = UUID.randomUUID()
 
-    val userData = UserData(username, password, salt, emailAddress, uuid.toString())
+    val userData = UserData(username, password, salt, emailAddress, uuid)
 
     //nun wird der Link erstellt, den man klicken soll, um seine anmeldung abzuschließen,
     //zu dieser uuid wird der user gespeichert der registriert werden soll mithilfe einer Map

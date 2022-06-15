@@ -8,10 +8,9 @@ import de.devin.monity.util.notifications.Notification
 import de.devin.monity.util.notifications.send
 import io.ktor.http.cio.websocket.*
 import kotlinx.coroutines.runBlocking
+import java.util.UUID
 
-class OnlineUser(userData: UserData, userProfile: UserProfile, socketSession: DefaultWebSocketSession) : User(userData, userProfile,
-    socketSession
-), MessageSender {
+class OnlineUser(uuid: UUID, private val socketSession: DefaultWebSocketSession) : User(uuid), MessageSender {
 
 
     fun sendNotification(notification: Notification) {
@@ -21,12 +20,12 @@ class OnlineUser(userData: UserData, userProfile: UserProfile, socketSession: De
     }
 
     fun setStatus(status: Status) {
-        DetailedUserDB.setStatus(getUUID(), status)
+        DetailedUserDB.setStatus(uuid, status)
     }
 
     override fun sendMessageTo(to: OnlineUser, message: Message) {
     }
 
-    override fun sendMessageTo(to: Group, message: Message) {
+    override fun sendMessageTo(to: GroupChat, message: Message) {
     }
 }

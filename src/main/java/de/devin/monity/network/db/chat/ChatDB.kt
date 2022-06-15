@@ -1,12 +1,10 @@
 package de.devin.monity.network.db
 
+import de.devin.monity.network.db.chat.GroupDB
 import de.devin.monity.network.db.util.DBManager
 import de.devin.monity.util.GroupRole
-import org.jetbrains.exposed.sql.SchemaUtils
+import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.Table
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.util.*
 
@@ -37,6 +35,9 @@ object ChatDB: Table("chats"), DBManager<ChatData, UUID> {
         return transaction { select(chatID eq id.toString()).count() > 0 }
     }
 
+    fun getChatsFor(user: UUID): List<ChatData> {
+        return transaction { select((initiator eq user.toString()) or (otherUser eq user.toString())) }.map { get(UUID.fromString(it[chatID])) }
+    }
     override fun get(id: UUID): ChatData {
         return transaction {
             select(chatID eq id.toString()).map {
@@ -46,6 +47,12 @@ object ChatDB: Table("chats"), DBManager<ChatData, UUID> {
                     it[started],
                     MessageDB.getMessagesForChat(id))}[0]
         }
+    }
+
+    fun newID(): UUID {
+        var uuid = UUID.randomUUID()
+        while (has(uuid) || GroupDB.has(uuid)) uuid = UUID.randomUUID()
+        return uuid
     }
 
     override fun insert(obj: ChatData) {

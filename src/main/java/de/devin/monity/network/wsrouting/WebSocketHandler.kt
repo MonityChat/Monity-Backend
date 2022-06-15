@@ -78,7 +78,7 @@ object WebSocketHandler {
 
                     val user = UserDB.getByUserOrEmail(userName)
 
-                    socketAuthMap[UUID.fromString(user.uuid)] = socket
+                    socketAuthMap[user.uuid] = socket
                     valid = true
 
                     if (AuthHandler.getLevel(auth).weight < AuthLevel.AUTH_LEVEL_USER.weight)

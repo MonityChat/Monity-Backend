@@ -3,6 +3,7 @@ package de.devin.monity.network.db.chat
 import de.devin.monity.network.db.util.DBManager
 import de.devin.monity.util.GroupRole
 import org.jetbrains.exposed.sql.SchemaUtils
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.select
@@ -25,6 +26,10 @@ object GroupMemberDB: Table("group_members"), DBManager<List<GroupMemberData>, U
 
     override fun get(id: UUID): List<GroupMemberData> {
         return transaction { select { groupID eq id.toString() }.map { GroupMemberData(UUID.fromString(it[userID]), id, GroupRole.valueOf(it[role])) } }
+    }
+
+    fun getGroupsWhereUserIsIncluded(user: UUID): List<UUID> {
+        return transaction { select { userID eq user.toString() }  }.map { UUID.fromString(it[groupID]) }
     }
 
     override fun insert(obj: List<GroupMemberData>) {

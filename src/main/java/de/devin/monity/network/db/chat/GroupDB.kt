@@ -1,15 +1,14 @@
 package de.devin.monity.network.db.chat
 
+import de.devin.monity.model.GroupChat
 import de.devin.monity.network.db.GroupProfile
 import de.devin.monity.network.db.GroupProfileDB
 import de.devin.monity.network.db.MessageDB
 import de.devin.monity.network.db.MessageData
 import de.devin.monity.network.db.util.DBManager
 import de.devin.monity.util.GroupRole
-import org.jetbrains.exposed.sql.SchemaUtils
-import org.jetbrains.exposed.sql.Table
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.select
+import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.util.UUID
 
@@ -61,7 +60,6 @@ object GroupDB: Table("groups"), DBManager<GroupChatData, UUID> {
     override fun has(id: UUID): Boolean {
         return transaction { select { groupID eq id.toString() }.count() > 0 }
     }
-
     override fun get(id: UUID): GroupChatData {
         return transaction {
             select { groupID eq id.toString() }.map {
@@ -78,6 +76,11 @@ object GroupDB: Table("groups"), DBManager<GroupChatData, UUID> {
         }
     }
 
+    fun getGroupsWhereUserIsIncluded(user: UUID): Set<GroupChatData> {
+        return  (transaction { select (initiatorID eq user.toString()) }.map {
+            get(UUID.fromString(it[groupID]))
+        } + GroupMemberDB.getGroupsWhereUserIsIncluded(user).map { get(it) }).toSet()
+    }
     override fun insert(obj: GroupChatData) {
         transaction {
             insert {

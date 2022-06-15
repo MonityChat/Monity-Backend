@@ -36,7 +36,7 @@ object UserHandler {
         val profile = DetailedUserDB.get(uuid)
 
         val socket = WebSocketHandler.getConnection(uuid)
-        return OnlineUser(data, profile, socket)
+        return OnlineUser(uuid, socket)
     }
 
     fun sendNotificationIfOnline(target: UUID, notification: Notification) {
@@ -44,8 +44,8 @@ object UserHandler {
         getOnlineUser(target).sendNotification(notification)
     }
 
-    fun getOfflineUser(): User {
-        TODO("IMPLEMENT")
+    fun getOfflineUser(uuid: UUID): User {
+        return User(uuid)
     }
 
 

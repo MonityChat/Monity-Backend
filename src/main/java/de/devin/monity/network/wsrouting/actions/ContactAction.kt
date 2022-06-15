@@ -155,7 +155,7 @@ class ContactSearchAction: Action {
         val userArray = JSONArray()
 
         for (user in users) {
-            userArray.put(toJSON(DetailedUserDB.get(UUID.fromString(user.uuid))))
+            userArray.put(toJSON(DetailedUserDB.get(user.uuid)))
         }
         return JSONObject().put("users", userArray)
     }

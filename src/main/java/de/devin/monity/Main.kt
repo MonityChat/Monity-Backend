@@ -82,7 +82,7 @@ object Monity {
 
                         //User successfully connected
                         val user = WebSocketHandler.getUserFrom(this)
-                        user.setStatus(user.getProfile().preferredStatus)
+                        user.setStatus(user.profile.preferredStatus)
 
                         for (frame in this.incoming) {
                             val returnPacket = WebSocketHandler.handleIncomingContent(frame, this)
