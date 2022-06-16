@@ -1,9 +1,9 @@
 package de.devin.monity.util
 
-enum class GroupRole {
+enum class GroupRole(val weight: Int) {
 
-    MEMBER,
-    MODERATOR,
-    ADMIN
+    MEMBER(0),
+    MODERATOR(1),
+    ADMIN(2)
 
 }

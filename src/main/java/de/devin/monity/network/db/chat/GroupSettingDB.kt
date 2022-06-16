@@ -10,12 +10,13 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import java.util.UUID
 
 
-data class GroupSettings(val groupID: UUID, val opened: Boolean, val inviteOnly: Boolean, val requiresRequest: Boolean)
+data class GroupSettings(val groupID: UUID, val opened: Boolean, val inviteOnly: Boolean, val requiresRequest: Boolean, val rolesOnly: Boolean)
 object GroupSettingDB: Table("groupsettings"), DBManager<GroupSettings, UUID> {
 
     private val opened = bool("group_setting_opened")
     private val inviteOnly = bool("group_setting_invite_only")
     private val requiresRequest = bool("group_setting_requires_request")
+    private val rolesOnly = bool("group_setting_roles_only")
     private val groupID = varchar("group_setting_group_id", 36)
 
     override val primaryKey = PrimaryKey(groupID)
@@ -29,7 +30,7 @@ object GroupSettingDB: Table("groupsettings"), DBManager<GroupSettings, UUID> {
     }
 
     override fun get(id: UUID): GroupSettings {
-        return transaction { select(groupID eq id.toString()).map { GroupSettings(id, it[opened], it[inviteOnly], it[requiresRequest]) } }[0]
+        return transaction { select(groupID eq id.toString()).map { GroupSettings(id, it[opened], it[inviteOnly], it[requiresRequest], it[rolesOnly]) } }[0]
     }
 
     override fun insert(obj: GroupSettings) {
@@ -38,6 +39,8 @@ object GroupSettingDB: Table("groupsettings"), DBManager<GroupSettings, UUID> {
                 it[opened] = obj.opened
                 it[inviteOnly] = obj.inviteOnly
                 it[requiresRequest] = obj.requiresRequest
+                it[rolesOnly] = obj.rolesOnly
+
                 it[groupID] = obj.groupID.toString()
             }
         }

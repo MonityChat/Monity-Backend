@@ -32,6 +32,10 @@ object GroupMemberDB: Table("group_members"), DBManager<List<GroupMemberData>, U
         return transaction { select { userID eq user.toString() }  }.map { UUID.fromString(it[groupID]) }
     }
 
+    fun getGroupMemberFor(chatID: UUID, user: UUID): GroupMemberData {
+        return get(chatID).first { it.id == user }
+    }
+
     override fun insert(obj: List<GroupMemberData>) {
         transaction {
             insert {

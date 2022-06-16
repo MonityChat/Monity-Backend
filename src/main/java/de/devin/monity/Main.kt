@@ -30,7 +30,7 @@ import java.io.File
 import java.net.URLDecoder
 
 val bootLocation = LocationGetter().getLocation()
-const val version = "1.2.7"
+const val version = "1.2.9"
 const val name = "Monity"
 
 fun main() {
