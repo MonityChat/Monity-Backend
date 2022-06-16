@@ -36,6 +36,14 @@ object MediaDB: Table("media"), DBManager<List<MediaData>, UUID> {
         return transaction { select(messageID eq  id.toString()).map { MediaData(id, it[filePath]) } }
     }
 
+    fun insertSingle(item: MediaData) {
+        transaction {
+            insert {
+                it[messageID] = item.id.toString()
+                it[filePath] = item.filePath
+            }
+        }
+    }
     override fun insert(obj: List<MediaData>) {
         transaction {
             insert {

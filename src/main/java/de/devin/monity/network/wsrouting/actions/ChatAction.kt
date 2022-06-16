@@ -137,7 +137,7 @@ class PrivateChatDeleteMessage: Action {
 
 class PrivateChatEditMessage: Action {
     override val name: String
-        get() = "chat:private:message:edit"
+        get() = "chat:private:edit:message"
     override val parameters: List<Parameter>
         get() = listOf(Parameter("messageID"), Parameter("chatID"), Parameter("newContent"))
 

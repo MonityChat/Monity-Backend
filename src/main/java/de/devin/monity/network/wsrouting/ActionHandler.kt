@@ -16,8 +16,6 @@ object ActionHandler {
     fun loadDefaultActions() {
         //Get Data Actions
         registerAction(UserSelfDataAction())
-        registerAction(ContactGetAction())
-        registerAction(ContactGetOpenRequest())
 
         //Contact Actions
         registerAction(ContactSearchAction())
@@ -25,6 +23,10 @@ object ActionHandler {
         registerAction(ContactDeclineAction())
         registerAction(ContactAcceptAction())
         registerAction(ContactBlockAction())
+        registerAction(ContactGetOpenRequest())
+        registerAction(ContactGetAction())
+
+        //Profile actions
         registerAction(ProfileUpdateAction())
 
         //Private chat actions
@@ -33,6 +35,7 @@ object ActionHandler {
         registerAction(PrivateChatGetLatestMessages())
         registerAction(PrivateChatGetMessages())
         registerAction(PrivateChatEditMessage())
+
 
 
     }
