@@ -1,4 +1,4 @@
-package de.devin.monity.network.db
+package de.devin.monity.network.db.chat
 
 import de.devin.monity.network.db.util.DBManager
 import org.jetbrains.exposed.sql.SchemaUtils
@@ -32,7 +32,7 @@ object GroupProfileDB: Table("group_profiles"), DBManager<GroupProfile, UUID> {
     }
 
     override fun get(id: UUID): GroupProfile {
-        return transaction { select { groupID eq id.toString() }.map {GroupProfile(id, it[title], it[description], it[shortStatus], it[image], it[r], it[b], it[g])} }[0]
+        return transaction { select { groupID eq id.toString() }.map { GroupProfile(id, it[title], it[description], it[shortStatus], it[image], it[r], it[b], it[g]) } }[0]
     }
 
     override fun insert(obj: GroupProfile) {

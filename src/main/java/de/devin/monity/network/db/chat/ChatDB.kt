@@ -1,8 +1,5 @@
-package de.devin.monity.network.db
+package de.devin.monity.network.db.chat
 
-import de.devin.monity.network.db.chat.GroupDB
-import de.devin.monity.network.db.chat.MessageDB
-import de.devin.monity.network.db.chat.MessageData
 import de.devin.monity.network.db.util.DBManager
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
@@ -46,7 +43,8 @@ object ChatDB: Table("chats"), DBManager<ChatData, UUID> {
                     UUID.fromString(it[otherUser]),
                     id,
                     it[started],
-                    MessageDB.getMessagesForChat(id))}[0]
+                    MessageDB.getMessagesForChat(id))
+            }[0]
         }
     }
 

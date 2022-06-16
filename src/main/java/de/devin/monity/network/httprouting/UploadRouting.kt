@@ -1,8 +1,8 @@
 package de.devin.monity.network.httprouting
 
 import de.devin.monity.network.auth.AuthLevel
-import de.devin.monity.network.db.MediaDB
-import de.devin.monity.network.db.MediaData
+import de.devin.monity.network.db.chat.MediaDB
+import de.devin.monity.network.db.chat.MediaData
 import de.devin.monity.network.db.user.DetailedUserDB
 import de.devin.monity.util.FileManager
 import de.devin.monity.util.validUUID
@@ -50,12 +50,13 @@ fun Route.UploadImage() {
             val fileName = call.request.queryParameters["fileName"] ?: return@post call.respondText("Missing parameter fileName", status = HttpStatusCode.BadRequest)
             var embedIDRaw = call.request.queryParameters["embedID"] ?: return@post call.respondText("Missing parameter embedID", status = HttpStatusCode.BadRequest)
 
+
             if (embedIDRaw.isEmpty()) {
                 var randomID = UUID.randomUUID()
                 while (MediaDB.has(randomID)) randomID = UUID.randomUUID()
                 embedIDRaw = randomID.toString()
             }
-            
+
             if (!validUUID(chatIDString)) return@post call.respondText("Invalid parameter UUID", status = HttpStatusCode.BadRequest)
             if (!validUUID(embedIDRaw)) return@post call.respondText("Invalid parameter UUID", status = HttpStatusCode.BadRequest)
 

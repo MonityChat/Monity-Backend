@@ -1,4 +1,4 @@
-package de.devin.monity.network.db
+package de.devin.monity.network.db.chat
 
 import de.devin.monity.network.db.util.DBManager
 import org.jetbrains.exposed.sql.SchemaUtils

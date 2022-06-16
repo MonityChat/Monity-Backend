@@ -14,9 +14,6 @@ object ActionHandler {
     private val registeredActionHandlers = ArrayList<Action>()
 
     fun loadDefaultActions() {
-        //Get Data Actions
-        registerAction(UserSelfDataAction())
-
         //Contact Actions
         registerAction(ContactSearchAction())
         registerAction(ContactAddAction())
@@ -28,6 +25,7 @@ object ActionHandler {
 
         //Profile actions
         registerAction(ProfileUpdateAction())
+        registerAction(ProfileGetSelfAction())
 
         //Private chat actions
         registerAction(PrivateChatSendMessage())

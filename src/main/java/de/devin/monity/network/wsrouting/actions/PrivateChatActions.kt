@@ -1,9 +1,8 @@
 package de.devin.monity.network.wsrouting.actions
 
-import de.devin.monity.model.Message
-import de.devin.monity.network.db.ChatDB
-import de.devin.monity.network.db.ChatData
-import de.devin.monity.network.db.MediaDB
+import de.devin.monity.network.db.chat.ChatDB
+import de.devin.monity.network.db.chat.ChatData
+import de.devin.monity.network.db.chat.MediaDB
 import de.devin.monity.network.db.chat.MessageDB
 import de.devin.monity.network.db.chat.MessageData
 import de.devin.monity.network.db.user.UserContactDB
@@ -42,7 +41,7 @@ class PrivateChatSendMessage: Action {
 
         if (chats.any { it.initiator == user.uuid || it.otherUser == user.uuid }) {
             //chat does not exist yet, so create one
-            val chat = ChatData(sender, targetUUID,ChatDB.newID(), System.currentTimeMillis(), listOf())
+            val chat = ChatData(sender, targetUUID, ChatDB.newID(), System.currentTimeMillis(), listOf())
             ChatDB.insert(chat)
             UserHandler.sendNotificationIfOnline(targetUUID, PrivateChatCreatedNotification(sender, chat))
         }

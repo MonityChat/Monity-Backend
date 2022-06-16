@@ -1,7 +1,6 @@
 package de.devin.monity.util
 
 import de.devin.monity.LocationGetter
-import de.devin.monity.network.db.MediaDB
 import java.io.File
 import java.util.UUID
 

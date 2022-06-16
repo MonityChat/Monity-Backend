@@ -1,14 +1,11 @@
 package de.devin.monity.model
 
-import de.devin.monity.network.db.ChatDB
+import de.devin.monity.network.db.chat.ChatDB
 import de.devin.monity.network.db.chat.GroupDB
 import de.devin.monity.network.db.user.DetailedUserDB
 import de.devin.monity.network.db.user.UserContactDB
 import de.devin.monity.network.db.user.UserDB
-import de.devin.monity.network.db.user.UserProfile
-import de.devin.monity.network.httprouting.UserData
 import de.devin.monity.util.dataconnectors.UserHandler
-import io.ktor.http.cio.websocket.*
 import java.util.UUID
 
 

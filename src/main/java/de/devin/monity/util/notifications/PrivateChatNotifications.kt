@@ -1,7 +1,6 @@
 package de.devin.monity.util.notifications
 
-import de.devin.monity.network.db.ChatData
-import de.devin.monity.network.db.chat.MessageDB
+import de.devin.monity.network.db.chat.ChatData
 import de.devin.monity.network.db.chat.MessageData
 import de.devin.monity.network.db.user.UserDB
 import de.devin.monity.util.toJSON

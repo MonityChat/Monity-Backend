@@ -1,10 +1,5 @@
 package de.devin.monity.network.db.chat
 
-import de.devin.monity.model.MessageSender
-import de.devin.monity.network.db.ChatDB
-import de.devin.monity.network.db.ChatData
-import de.devin.monity.network.db.MediaDB
-import de.devin.monity.network.db.MediaData
 import de.devin.monity.network.db.util.DBManager
 import de.devin.monity.util.MessageStatus
 import org.jetbrains.exposed.sql.*
