@@ -1,10 +1,7 @@
 package de.devin.monity.network.db.chat
 
-import de.devin.monity.model.GroupChat
 import de.devin.monity.network.db.GroupProfile
 import de.devin.monity.network.db.GroupProfileDB
-import de.devin.monity.network.db.MessageDB
-import de.devin.monity.network.db.MessageData
 import de.devin.monity.network.db.util.DBManager
 import de.devin.monity.util.GroupRole
 import org.jetbrains.exposed.sql.*

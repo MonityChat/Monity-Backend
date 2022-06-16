@@ -1,8 +1,9 @@
 package de.devin.monity.network.db
 
 import de.devin.monity.network.db.chat.GroupDB
+import de.devin.monity.network.db.chat.MessageDB
+import de.devin.monity.network.db.chat.MessageData
 import de.devin.monity.network.db.util.DBManager
-import de.devin.monity.util.GroupRole
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -53,6 +54,10 @@ object ChatDB: Table("chats"), DBManager<ChatData, UUID> {
         var uuid = UUID.randomUUID()
         while (has(uuid) || GroupDB.has(uuid)) uuid = UUID.randomUUID()
         return uuid
+    }
+
+    fun getPrivateChatBetween(user1: UUID, user2: UUID): ChatData {
+        return transaction { select((initiator eq user2.toString()) or (initiator eq user1.toString())) }.map { get(UUID.fromString(it[chatID])) }[0]
     }
 
     override fun insert(obj: ChatData) {

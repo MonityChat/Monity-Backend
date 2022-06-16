@@ -26,6 +26,15 @@ object ActionHandler {
         registerAction(ContactAcceptAction())
         registerAction(ContactBlockAction())
         registerAction(ProfileUpdateAction())
+
+        //Private chat actions
+        registerAction(PrivateChatSendMessage())
+        registerAction(PrivateChatDeleteMessage())
+        registerAction(PrivateChatGetLatestMessages())
+        registerAction(PrivateChatGetMessages())
+        registerAction(PrivateChatEditMessage())
+
+
     }
     private fun registerAction(action: Action) {
         registeredActionHandlers += action

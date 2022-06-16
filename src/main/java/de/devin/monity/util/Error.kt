@@ -97,12 +97,27 @@ enum class Error {
     ALREADY_MADE_CONTACT,
 
     /**
-     * Occurs when a user tries to accept a friend request from a blocked user
+     * Occurs when a user tries to perform an action on a target but blocked the target
      */
     USER_BLOCKED_TARGET,
 
     /**
-     * Occurs when a users tries to accept a non-existing friend request
+     * Occurs when a user
+     */
+    TARGET_BLOCKED_USER,
+
+    /**
+     * Occurs when a requested chat does not exist
+     */
+    CHAT_NOT_FOUND,
+
+    /**
+     * Occurs when a requested chat does nto exist
+     */
+    MESSAGE_NOT_FOUND,
+
+    /**
+     * Occurs when a users tries to perform an action on a target but the target the blocked the user
      */
     INVALID_FRIEND_DECLINE_REQUEST,
 
