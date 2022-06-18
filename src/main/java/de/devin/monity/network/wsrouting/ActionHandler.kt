@@ -36,14 +36,12 @@ object ActionHandler {
         registerAction(PrivateChatReactMessage())
         registerAction(PrivateChatMessageRead())
 
-
         //User Settings
         registerAction(UserSettingsGetAction())
         registerAction(UserSettingsChangeAction())
 
         //User actions
         registerAction(UserStartTyping())
-
 
     }
     private fun registerAction(action: Action) {

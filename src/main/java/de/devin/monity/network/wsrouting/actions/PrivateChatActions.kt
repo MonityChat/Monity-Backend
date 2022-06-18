@@ -82,6 +82,9 @@ class PrivateChatGetLatestMessages: Action {
         val messagesArray = JSONArray()
         messages.forEach { messagesArray.put(toJSON(it).put("author", UserDB.get(it.sender).username)) }
 
+        val target = if (chat.initiator == sender) chat.otherUser else chat.initiator
+
+        UserHandler.sendNotificationIfOnline(target, PrivateChatMessageReadNotification(sender, chatID))
 
         return json.put("messages", messagesArray)
     }
