@@ -6,6 +6,7 @@ import de.devin.monity.network.db.chat.*
 import de.devin.monity.network.db.user.DetailedUserDB
 import de.devin.monity.network.db.user.UserContactDB
 import de.devin.monity.network.db.user.UserDB
+import de.devin.monity.network.db.user.UserSettingsDB
 import de.devin.monity.network.httprouting.*
 import de.devin.monity.network.wsrouting.ActionHandler
 import de.devin.monity.network.wsrouting.WebSocketHandler
@@ -138,6 +139,7 @@ object Monity {
             GroupSettingDB.load()
             MediaDB.load()
             MessageDB.load()
+            UserSettingsDB.load()
         }
     }
 }

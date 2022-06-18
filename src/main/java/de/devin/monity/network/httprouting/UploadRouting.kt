@@ -91,5 +91,4 @@ fun Route.UploadImage() {
             call.respondText(json.toString(), status = HttpStatusCode.OK)
         }
     }
-
 }

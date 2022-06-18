@@ -122,6 +122,12 @@ enum class Error {
     USER_ALREADY_REACTED,
 
     /**
+     * Occurs when a user tries to update a non-existing setting
+     */
+    INVALID_SETTING,
+
+
+    /**
      * Occurs when a users tries to perform an action on a target but the target the blocked the user
      */
     INVALID_FRIEND_DECLINE_REQUEST,

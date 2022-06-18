@@ -2,9 +2,7 @@ package de.devin.monity.network.httprouting
 
 import de.devin.monity.bootLocation
 import de.devin.monity.network.auth.AuthHandler
-import de.devin.monity.network.db.user.DetailedUserDB
-import de.devin.monity.network.db.user.UserDB
-import de.devin.monity.network.db.user.createDefaultUser
+import de.devin.monity.network.db.user.*
 import de.devin.monity.util.Error
 import de.devin.monity.util.htmlEmail
 import filemanagment.util.logInfo
@@ -63,10 +61,6 @@ fun Route.UserRoute() {
                 }
 
                 call.respond(Salt(user.salt))
-            }
-            "privatekey" -> run {
-                val username = call.request.queryParameters["username"]
-                    ?: return@get call.respondText("Missing parameter username", status = HttpStatusCode.BadRequest)
             }
 
             "exists" -> run {
@@ -223,6 +217,7 @@ private fun confirmUser(id: UUID, uuid: UUID): Error {
     //nun den nutzer in die Datenbank eintragen
     UserDB.insert(user)
     DetailedUserDB.insert(createDefaultUser(user.username, (user.uuid)))
+    UserSettingsDB.insert(UserSettings(user.uuid, FriendRequestLevel.ALL, DataOptions.ALL))
 
 
     logInfo("Confirmed user ${user.username}")
@@ -323,21 +318,21 @@ private fun userRegister(username: String, password: String, emailAddress: Strin
     //da, wenn er bereits gespeichert wird der Name sowie E-Mail Adresse fest sind und blockiert werden
     //so lange die Registrierung aber nicht abgeschlossen ist, sollen diese noch frei bleiben.
     //Damit wird verhindert, dass namen unnötig blockiert werden
-        val email = htmlEmail()
-        email.addTo(emailAddress)
-        email.subject = "Monity verification"
-        email.embed(File("$bootLocation/../resources/Logo.png"), "logo")
-        email.embed(File("$bootLocation/../resources/waves.png"), "waves")
+    val email = htmlEmail()
+    email.addTo(emailAddress)
+    email.subject = "Monity verification"
+    email.embed(File("$bootLocation/../resources/Logo.png"), "logo")
+    email.embed(File("$bootLocation/../resources/waves.png"), "waves")
 
-        var htmlLines = Files.readString(Path.of("$bootLocation/../resources/email.html"))
-        htmlLines = htmlLines.replace("placeholder:url", link)
-        htmlLines = htmlLines.replace(
-            "placeholder:content",
-            "Thank you for creating a Monity account.\nTo complete your registration click the link below."
-        )
-        htmlLines = htmlLines.replace("placeholder:button", "Confirm Email")
+    var htmlLines = Files.readString(Path.of("$bootLocation/../resources/email.html"))
+    htmlLines = htmlLines.replace("placeholder:url", link)
+    htmlLines = htmlLines.replace(
+        "placeholder:content",
+        "Thank you for creating a Monity account.\nTo complete your registration click the link below."
+    )
+    htmlLines = htmlLines.replace("placeholder:button", "Confirm Email")
 
-        email.setHtmlMsg(htmlLines)
+    email.setHtmlMsg(htmlLines)
     try {
         logInfo("Send registration email to: $emailAddress")
         email.send()
