@@ -2,12 +2,20 @@ package de.devin.monity.util
 
 import de.devin.monity.LocationGetter
 import java.io.File
+import java.util.Random
 import java.util.UUID
 
 object FileManager {
 
     fun getNewFileToUploadProfilePicture(uuid: UUID, fileType: String): File {
-        val file = File(LocationGetter().getLocation().absolutePath + "/../data/images/users/$uuid/profilepicture.$fileType")
+        val number = Random().nextInt(1000000)
+        val file = File(LocationGetter().getLocation().absolutePath + "/../data/images/users/$uuid/profilepicture$number.$fileType")
+        if (file.parentFile.listFiles() != null) {
+            for (fileItem in file.parentFile.listFiles()) {
+                fileItem.delete()
+            }
+        }
+
         if (file.exists()) {
             file.delete()
         }

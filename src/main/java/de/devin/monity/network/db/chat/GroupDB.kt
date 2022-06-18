@@ -72,8 +72,8 @@ object GroupDB: Table("groups"), DBManager<GroupChatData, UUID> {
     }
 
     fun getGroupsWhereUserIsIncluded(user: UUID): Set<GroupChatData> {
-        return  (transaction { select (initiatorID eq user.toString()) }.map {
-            get(UUID.fromString(it[groupID]))
+        return  (transaction { select (initiatorID eq user.toString()).map {
+            get(UUID.fromString(it[groupID])) }
         } + GroupMemberDB.getGroupsWhereUserIsIncluded(user).map { get(it) }).toSet()
     }
     override fun insert(obj: GroupChatData) {

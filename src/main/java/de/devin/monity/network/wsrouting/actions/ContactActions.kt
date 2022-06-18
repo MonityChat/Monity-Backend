@@ -1,5 +1,7 @@
 package de.devin.monity.network.wsrouting.actions
 
+import de.devin.monity.network.db.chat.ChatDB
+import de.devin.monity.network.db.chat.MessageData
 import de.devin.monity.network.db.user.DetailedUserDB
 import de.devin.monity.network.db.user.FriendData
 import de.devin.monity.network.db.user.UserContactDB
@@ -10,6 +12,7 @@ import org.json.JSONObject
 import java.util.*
 import de.devin.monity.util.Error
 import de.devin.monity.util.FriendStatus
+import de.devin.monity.util.MessageStatus
 import de.devin.monity.util.dataconnectors.UserHandler
 import de.devin.monity.util.notifications.ContactAddNotification
 import de.devin.monity.util.notifications.ContactAddRequestNotification
@@ -123,7 +126,16 @@ class ContactGetAction: Action {
         val contacts = UserContactDB.getContactsFrom(sender)
 
         val contactsArray = JSONArray()
-        contacts.forEach { contactsArray.put(toJSON(DetailedUserDB.get(it))) }
+        contacts.forEach { contact ->
+            var amount = 0
+            var latestUnread: MessageData? = null
+            if (ChatDB.hasPrivateChat(sender, contact)) {
+                val chat = ChatDB.getPrivateChatBetween(sender, contact)
+                amount = chat.messages.count { it.sender != contact && it.status == MessageStatus.PENDING }
+                latestUnread = chat.messages.maxByOrNull { it.index }!!
+            }
+            contactsArray.put(toJSON(DetailedUserDB.get(contact)).put("unreadMessages", amount).put("lastUnread", if (latestUnread == null) "null" else toJSON(latestUnread)))
+        }
         return JSONObject().put("contacts", contactsArray)
     }
 }

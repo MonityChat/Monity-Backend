@@ -16,7 +16,7 @@ open class User(val uuid: UUID) {
 
     val profile = DetailedUserDB.get(uuid)
     val data = UserDB.get(uuid)
-    val contacts: List<User> = UserContactDB.getContactsFrom(uuid).map { UserHandler.getOfflineUser(uuid) }
+    val contacts = UserContactDB.getContactsFrom(uuid)
     val privateChats = ChatDB.getChatsFor(uuid)
     val groupChats = GroupDB.getGroupsWhereUserIsIncluded(uuid)
     fun getUserName(): String {

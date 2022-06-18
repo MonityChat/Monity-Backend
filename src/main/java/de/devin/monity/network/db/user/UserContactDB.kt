@@ -28,7 +28,7 @@ object UserContactDB: Table("user_contact"), DBManager<List<FriendData>, UUID> {
     }
 
     fun getContactsFrom(id: UUID): List<UUID> {
-        return get(id).filter { it.status == FriendStatus.ACCEPTED }.map { it.from }
+        return get(id).filter { it.status == FriendStatus.ACCEPTED }.map { if (it.from == id) it.to else it.from }
     }
 
     fun removeRequest(from: UUID, to: UUID) {

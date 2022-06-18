@@ -28,7 +28,11 @@ fun Route.UploadImage() {
             val uuid = UUID.fromString(uuidString)
             val file = FileManager.getNewFileToUploadProfilePicture(uuid, fileType)
 
+            val path = file.absolutePath.split("\\data")[1]
+
             val multipartData = call.receiveMultipart()
+
+
 
             multipartData.forEachPart { part ->
                 when (part) {
@@ -38,7 +42,7 @@ fun Route.UploadImage() {
                     }
                 }
             }
-            DetailedUserDB.updateProfilePicture(uuid)
+            DetailedUserDB.updateProfilePicture(uuid, path)
 
             call.respondText(DetailedUserDB.get(uuid).profileImageLocation, status = HttpStatusCode.OK)
         }
@@ -49,7 +53,6 @@ fun Route.UploadImage() {
             val fileType = call.request.queryParameters["fileType"] ?: return@post call.respondText("Missing parameter fileType", status = HttpStatusCode.BadRequest)
             val fileName = call.request.queryParameters["fileName"] ?: return@post call.respondText("Missing parameter fileName", status = HttpStatusCode.BadRequest)
             var embedIDRaw = call.request.queryParameters["embedID"] ?: return@post call.respondText("Missing parameter embedID", status = HttpStatusCode.BadRequest)
-
 
             if (embedIDRaw.isEmpty()) {
                 var randomID = UUID.randomUUID()
@@ -68,7 +71,7 @@ fun Route.UploadImage() {
 
             val file = FileManager.getNewFileToUploadFile(uuid, embedID, fileType, fileName)
 
-            val path = file.absolutePath.split("\\/images.*")[0]
+            val path = file.absolutePath.split("\\data")[1]
             val multipartData = call.receiveMultipart()
 
             multipartData.forEachPart { part ->

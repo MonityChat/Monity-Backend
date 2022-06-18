@@ -25,6 +25,9 @@ object ChatDB: Table("chats"), DBManager<ChatData, UUID> {
     private val otherUser = varchar("chat_other_uuid", 36)
     private val chatID = varchar("chat_id", 36)
     private val started = long("chat_started_timestamp")
+
+    override val primaryKey = PrimaryKey(chatID)
+
     override fun load() {
         SchemaUtils.createMissingTablesAndColumns(this)
     }
@@ -34,7 +37,7 @@ object ChatDB: Table("chats"), DBManager<ChatData, UUID> {
     }
 
     fun getChatsFor(user: UUID): List<ChatData> {
-        return transaction { select((initiator eq user.toString()) or (otherUser eq user.toString())) }.map { get(UUID.fromString(it[chatID])) }
+        return transaction { select((initiator eq user.toString()) or (otherUser eq user.toString())).map { get(UUID.fromString(it[chatID])) } }
     }
     override fun get(id: UUID): ChatData {
         return transaction {
@@ -48,6 +51,10 @@ object ChatDB: Table("chats"), DBManager<ChatData, UUID> {
         }
     }
 
+    fun hasPrivateChat(user1: UUID, user2: UUID): Boolean {
+        return getChatsFor(user1).any { it.initiator == user2 || it.otherUser == user2 }
+    }
+
     fun newID(): UUID {
         var uuid = UUID.randomUUID()
         while (has(uuid) || GroupDB.has(uuid)) uuid = UUID.randomUUID()
@@ -55,7 +62,7 @@ object ChatDB: Table("chats"), DBManager<ChatData, UUID> {
     }
 
     fun getPrivateChatBetween(user1: UUID, user2: UUID): ChatData {
-        return transaction { select((initiator eq user2.toString()) or (initiator eq user1.toString())) }.map { get(UUID.fromString(it[chatID])) }[0]
+        return transaction { select(((initiator eq user2.toString()) and (otherUser eq user1.toString()) ) or ((initiator eq user1.toString() and (otherUser eq user2.toString())))).map { get(UUID.fromString(it[chatID])) }[0] }
     }
 
     override fun insert(obj: ChatData) {

@@ -58,10 +58,10 @@ object DetailedUserDB: Table("user_profile"), DBManager<UserProfile, UUID> {
         }
     }
 
-    fun updateProfilePicture(user: UUID) {
+    fun updateProfilePicture(user: UUID, url: String) {
         transaction {
             update({ uuid eq user.toString() }) {
-                it[profileImageLocation] = "/images/users/$user/profilepicture.png"
+                it[profileImageLocation] = url
             }
         }
     }

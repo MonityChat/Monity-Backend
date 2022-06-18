@@ -13,9 +13,12 @@ data class MessageData(val sender: UUID,
                        val content: String,
                        val relatedTo: MessageData?,
                        val attachedMedia: List<MediaData>?,
+                       val reactions: List<ReactionData>,
                        val index: Long,
                        val sent: Long,
+                       val edited: Boolean,
                        val status: MessageStatus)
+
 object MessageDB: Table("messages"), DBManager<MessageData, UUID> {
 
     private val muid = varchar("message_id", 36)
@@ -25,6 +28,7 @@ object MessageDB: Table("messages"), DBManager<MessageData, UUID> {
     private val sent = long("message_timestamp_sent")
     private val index = long("message_index")
     private val relatedTo = varchar("message_relation_id", 36).nullable()
+    private val edited = bool("message_edited")
     private val status = varchar("message_status", 50)
 
     override val primaryKey = PrimaryKey(muid)
@@ -35,16 +39,26 @@ object MessageDB: Table("messages"), DBManager<MessageData, UUID> {
         return transaction { select { muid eq id.toString() }.count() > 0 }
     }
 
+    fun editMessageStatus(id: UUID, status: MessageStatus) {
+        transaction {
+            update ({muid eq id.toString()}) {
+                it[MessageDB.status] = status.toString()
+            }
+        }
+    }
+
     override fun get(id: UUID): MessageData {
         return transaction { select(muid eq id.toString())
             .map { MessageData(UUID.fromString(it[sender]),
                 UUID.fromString(it[muid]),
                 UUID.fromString(it[chatID]),
                 it[content],
-                get(UUID.fromString(it[relatedTo])),
+                if (it[relatedTo] != "null") get(UUID.fromString(it[relatedTo])) else null,
                 MediaDB.get(id),
+                ReactionDB.getReactionsForMessage(id),
                 it[index],
                 it[sent],
+                it[edited],
                 MessageStatus.valueOf(it[status])
             )
             } }[0]
@@ -58,7 +72,7 @@ object MessageDB: Table("messages"), DBManager<MessageData, UUID> {
 
     fun getNextIndex(chatId: UUID): Long {
         if (getMessagesForChat(chatId).isEmpty()) return 0
-        val highestIndex = transaction { select { chatID eq chatId.toString()}.orderBy(index to SortOrder.DESC) }.map { it[index] }[0]
+        val highestIndex = transaction { select { chatID eq chatId.toString()}.orderBy(index to SortOrder.DESC).map { it[index] }[0] }
         return highestIndex + 1
     }
     fun getMessagesForChat(chatID: UUID): List<MessageData> {
@@ -76,7 +90,11 @@ object MessageDB: Table("messages"), DBManager<MessageData, UUID> {
     }
 
     fun editMessageContent(messageID: UUID, content: String) {
-        transaction { update({muid eq messageID.toString()}) { it[MessageDB.content] = content } }
+        transaction { update({muid eq messageID.toString()}) {
+            it[MessageDB.content] = content
+            it[edited] = true
+            }
+        }
     }
     override fun insert(obj: MessageData) {
         transaction {
@@ -88,6 +106,7 @@ object MessageDB: Table("messages"), DBManager<MessageData, UUID> {
                 it[muid] = obj.messageID.toString()
                 it[index] = obj.index
                 it[relatedTo] = obj.relatedTo?.messageID.toString()
+                it[edited] = obj.edited
                 it[status] = obj.status.toString()
             }
         }

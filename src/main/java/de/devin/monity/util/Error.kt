@@ -117,6 +117,11 @@ enum class Error {
     MESSAGE_NOT_FOUND,
 
     /**
+     * Occurs when a users reacts to a message he has already reacted too
+     */
+    USER_ALREADY_REACTED,
+
+    /**
      * Occurs when a users tries to perform an action on a target but the target the blocked the user
      */
     INVALID_FRIEND_DECLINE_REQUEST,

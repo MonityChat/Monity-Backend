@@ -1,18 +1,11 @@
 package de.devin.monity.network.wsrouting.actions
 
-import de.devin.monity.network.db.chat.ChatDB
-import de.devin.monity.network.db.chat.ChatData
-import de.devin.monity.network.db.chat.MediaDB
-import de.devin.monity.network.db.chat.MessageDB
-import de.devin.monity.network.db.chat.MessageData
+import de.devin.monity.network.db.chat.*
 import de.devin.monity.network.db.user.UserContactDB
 import de.devin.monity.util.Error
 import de.devin.monity.util.MessageStatus
 import de.devin.monity.util.dataconnectors.UserHandler
-import de.devin.monity.util.notifications.PrivateChatCreatedNotification
-import de.devin.monity.util.notifications.PrivateChatMessageDeletedNotification
-import de.devin.monity.util.notifications.PrivateChatMessageEditNotification
-import de.devin.monity.util.notifications.PrivateChatMessageReceivedNotification
+import de.devin.monity.util.notifications.*
 import de.devin.monity.util.toJSON
 import org.json.JSONObject
 import java.util.*
@@ -37,9 +30,8 @@ class PrivateChatSendMessage: Action {
         if (UserContactDB.hasBlocked(targetUUID, sender)) return Error.TARGET_BLOCKED_USER.toJson()
 
         val user = UserHandler.getOnlineUser(sender)
-        val chats = user.privateChats
 
-        if (chats.any { it.initiator == user.uuid || it.otherUser == user.uuid }) {
+        if (!ChatDB.hasPrivateChat(sender, targetUUID)) {
             //chat does not exist yet, so create one
             val chat = ChatData(sender, targetUUID, ChatDB.newID(), System.currentTimeMillis(), listOf())
             ChatDB.insert(chat)
@@ -55,11 +47,11 @@ class PrivateChatSendMessage: Action {
 
         val status = if (UserHandler.isOnline(targetUUID)) MessageStatus.RECEIVED else MessageStatus.PENDING
 
-        val message = MessageData(sender, messageID, chat.id, content, related, embeds, index, sent,status)
+        val message = MessageData(sender, messageID, chat.id, content, related, embeds, listOf(), index, sent, false, status)
 
 
         MessageDB.insert(message)
-        UserHandler.sendNotificationIfOnline(targetUUID, PrivateChatMessageReceivedNotification(sender, message))
+        UserHandler.sendNotificationIfOnline(targetUUID, PrivateChatMessageReceivedNotification(sender, chat.id, message))
 
         return toJSON(message)
     }
@@ -79,12 +71,13 @@ class PrivateChatGetLatestMessages: Action {
         val chat = ChatDB.get(chatID)
 
         val messages = chat.messages.sortedByDescending { it.index }.slice(0..50)
+
+        chat.messages.forEach { if(it.sender != sender) MessageDB.editMessageStatus(it.messageID, MessageStatus.READ)}
         return toJSON(messages)
     }
 }
 
 class PrivateChatGetMessages: Action {
-
     override val name: String
         get() = "chat:private:get:messages"
     override val parameters: List<Parameter>
@@ -103,7 +96,6 @@ class PrivateChatGetMessages: Action {
 
         val messages = chat.messages.sortedByDescending { it.index }.slice(start..start+amount)
         return toJSON(messages)
-
     }
 }
 
@@ -128,9 +120,33 @@ class PrivateChatDeleteMessage: Action {
         val chat = ChatDB.get(chatID)
         val otherUser = if (chat.initiator == sender) chat.otherUser else chat.initiator
 
-        UserHandler.sendNotificationIfOnline(otherUser, PrivateChatMessageDeletedNotification(sender, messageID))
+        UserHandler.sendNotificationIfOnline(otherUser, PrivateChatMessageDeletedNotification(sender, chatID, messageID))
 
         return Error.NONE.toJson()
+    }
+}
+
+class PrivateChatReactMessage: Action {
+
+    override val name: String
+        get() = "chat:private:react:message"
+    override val parameters: List<Parameter>
+        get() = listOf(Parameter("messageID"), Parameter("reaction"))
+
+    override fun execute(sender: UUID, request: JSONObject): JSONObject {
+        val messageIDRaw = request.getString("messageID")
+        val messageID = UUID.fromString(messageIDRaw)
+        val reaction = request.getString("reaction")
+
+        if (!MessageDB.has(messageID)) return Error.MESSAGE_NOT_FOUND.toJson()
+        if (ReactionDB.hasUserReacted(messageID, sender, reaction)) return Error.USER_ALREADY_REACTED.toJson()
+
+        val reactionData = ReactionDB.addReactionToMessage(messageID, sender, reaction)
+
+        val chat = ChatDB.get(MessageDB.get(messageID).chat)
+        UserHandler.sendNotificationIfOnline( if (chat.initiator == sender) chat.otherUser else chat.initiator, PrivateChatUserReactedToMessageNotification(sender,reactionData , chat.id ))
+
+        return toJSON(reactionData)
     }
 }
 
@@ -157,7 +173,7 @@ class PrivateChatEditMessage: Action {
         val chat = ChatDB.get(chatID)
         val otherUser = if (chat.initiator == sender) chat.otherUser else chat.initiator
 
-        UserHandler.sendNotificationIfOnline(otherUser, PrivateChatMessageEditNotification(sender,editMessage))
+        UserHandler.sendNotificationIfOnline(otherUser, PrivateChatMessageEditNotification(sender, chatID, editMessage))
 
         return toJSON(editMessage)
     }

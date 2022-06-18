@@ -2,6 +2,7 @@ package de.devin.monity.util.notifications
 
 import de.devin.monity.network.db.chat.ChatData
 import de.devin.monity.network.db.chat.MessageData
+import de.devin.monity.network.db.chat.ReactionData
 import de.devin.monity.network.db.user.UserDB
 import de.devin.monity.util.toJSON
 import org.json.JSONObject
@@ -22,7 +23,7 @@ class PrivateChatCreatedNotification(private val creator: UUID, private val chat
         return json
     }
 }
-class PrivateChatMessageReceivedNotification(private val sender: UUID, private val message: MessageData): Notification {
+class PrivateChatMessageReceivedNotification(private val sender: UUID,private val chatID: UUID, private val message: MessageData): Notification {
 
     override val from: UUID
         get() = sender
@@ -35,12 +36,12 @@ class PrivateChatMessageReceivedNotification(private val sender: UUID, private v
 
         val userJson = toJSON(UserDB.get(sender))
 
-        json.put("content", JSONObject().put("from", userJson).put("message", toJSON(message)))
+        json.put("content", JSONObject().put("from", userJson).put("message", toJSON(message)).put("chat", chatID.toString()))
         return json
     }
 }
 
-class PrivateChatMessageDeletedNotification(private val sender: UUID, private val message: UUID): Notification {
+class PrivateChatMessageDeletedNotification(private val sender: UUID, private val chatID: UUID,  val message: UUID): Notification {
     override val from: UUID
         get() = sender
     override val name: String
@@ -52,12 +53,30 @@ class PrivateChatMessageDeletedNotification(private val sender: UUID, private va
 
         val userJson = toJSON(UserDB.get(sender))
 
-        json.put("content", JSONObject().put("from", userJson).put("messageID", toJSON(message)))
+        json.put("content", JSONObject().put("from", userJson).put("messageID", toJSON(message)).put("chat", chatID.toString()))
         return json
     }
 }
 
-class PrivateChatMessageEditNotification(private val sender: UUID, private val message: MessageData): Notification {
+class PrivateChatUserReactedToMessageNotification(private val sender: UUID, private val reactionData: ReactionData, private val chatID: UUID): Notification {
+
+    override val from: UUID
+        get() = sender
+    override val name: String
+        get() = "notification:chat:private:message:reacted"
+
+    override fun toJson(): JSONObject {
+        val json = JSONObject()
+        json.put("notification", name)
+
+        val userJson = toJSON(UserDB.get(sender))
+
+        json.put("content", JSONObject().put("from", userJson).put("reaction", toJSON(reactionData)).put("chat", chatID.toString()))
+        return json
+    }
+}
+
+class PrivateChatMessageEditNotification(private val sender: UUID, private val chatID: UUID, private val message: MessageData): Notification {
     override val from: UUID
         get() = sender
     override val name: String
@@ -69,7 +88,7 @@ class PrivateChatMessageEditNotification(private val sender: UUID, private val m
 
         val userJson = toJSON(UserDB.get(sender))
 
-        json.put("content", JSONObject().put("from", userJson).put("message", toJSON(message)))
+        json.put("content", JSONObject().put("from", userJson).put("message", toJSON(message)).put("chat", chatID.toString()))
         return json
     }
 }

@@ -2,6 +2,7 @@ package de.devin.monity
 
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
+import de.devin.monity.network.db.chat.*
 import de.devin.monity.network.db.user.DetailedUserDB
 import de.devin.monity.network.db.user.UserContactDB
 import de.devin.monity.network.db.user.UserDB
@@ -130,6 +131,13 @@ object Monity {
             DetailedUserDB.load()
             UserDB.load()
             UserContactDB.load()
+            ChatDB.load()
+            GroupDB.load()
+            GroupMemberDB.load()
+            GroupProfileDB.load()
+            GroupSettingDB.load()
+            MediaDB.load()
+            MessageDB.load()
         }
     }
 }

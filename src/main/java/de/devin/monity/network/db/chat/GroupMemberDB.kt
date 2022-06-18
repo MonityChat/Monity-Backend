@@ -29,7 +29,7 @@ object GroupMemberDB: Table("group_members"), DBManager<List<GroupMemberData>, U
     }
 
     fun getGroupsWhereUserIsIncluded(user: UUID): List<UUID> {
-        return transaction { select { userID eq user.toString() }  }.map { UUID.fromString(it[groupID]) }
+        return transaction { select { userID eq user.toString() }.map { UUID.fromString(it[groupID]) } }
     }
 
     fun getGroupMemberFor(chatID: UUID, user: UUID): GroupMemberData {

@@ -5,7 +5,9 @@ import de.devin.monity.util.Error
 import de.devin.monity.util.GroupRole
 import de.devin.monity.util.MessageStatus
 import de.devin.monity.util.dataconnectors.UserHandler
-import de.devin.monity.util.notifications.PrivateChatMessageReceivedNotification
+import de.devin.monity.util.notifications.GroupChatMessageDeletedNotification
+import de.devin.monity.util.notifications.GroupChatMessageEditNotification
+import de.devin.monity.util.notifications.GroupChatMessageReceivedNotification
 import de.devin.monity.util.toJSON
 import org.json.JSONObject
 import java.util.*
@@ -46,14 +48,62 @@ class GroupChatSendMessage: Action {
 
         val status = if (chat.members.all { UserHandler.isOnline(it.id) }) MessageStatus.RECEIVED else MessageStatus.PENDING
 
-        val message = MessageData(sender, messageID, chat.id, content, related, embeds, index, sent,status)
+        val message = MessageData(sender, messageID, chat.id, content, related, embeds, index, sent, false, status)
 
         MessageDB.insert(message)
 
-        chat.members.forEach{ UserHandler.sendNotificationIfOnline(it.id, PrivateChatMessageReceivedNotification(sender, message))}
-
+        chat.members.forEach{ UserHandler.sendNotificationIfOnline(it.id, GroupChatMessageReceivedNotification(sender, chatID, message))}
 
         return toJSON(message)
+    }
+}
 
+
+class GroupChatMessageDelete: Action {
+    override val name: String
+        get() = "chat:group:delete:message"
+    override val parameters: List<Parameter>
+        get() = listOf(Parameter("chatID"), Parameter("messageID"))
+    override fun execute(sender: UUID, request: JSONObject): JSONObject {
+        val chatIDRaw = request.getString("chatID")
+        val chatID = UUID.fromString(chatIDRaw)
+        val messageIDRaw = request.getString("messageID")
+        val messageID = UUID.fromString(messageIDRaw)
+
+
+        if (!ChatDB.has(chatID)) return Error.CHAT_NOT_FOUND.toJson()
+        if (!MessageDB.has(messageID)) return Error.MESSAGE_NOT_FOUND.toJson()
+
+        MessageDB.removeMessage(messageID)
+        val chat = GroupDB.get(chatID)
+
+        chat.members.forEach {UserHandler.sendNotificationIfOnline(it.id, GroupChatMessageDeletedNotification(sender, chatID, messageID)) }
+
+        return Error.NONE.toJson()
+    }
+}
+
+class GroupChatMessageEdit: Action {
+    override val name: String
+        get() = "chat:group:delete:edit"
+    override val parameters: List<Parameter>
+        get() = listOf(Parameter("chatID"), Parameter("messageID"), Parameter("newContent"))
+
+    override fun execute(sender: UUID, request: JSONObject): JSONObject {
+        val chatIDRaw = request.getString("chatID")
+        val chatID = UUID.fromString(chatIDRaw)
+        val messageIDRaw = request.getString("messageID")
+        val messageID = UUID.fromString(messageIDRaw)
+
+
+        if (!ChatDB.has(chatID)) return Error.CHAT_NOT_FOUND.toJson()
+        if (!MessageDB.has(messageID)) return Error.MESSAGE_NOT_FOUND.toJson()
+
+        MessageDB.editMessageContent(messageID, request.getString("newContent"))
+        val chat = GroupDB.get(chatID)
+
+        chat.members.forEach {UserHandler.sendNotificationIfOnline(it.id, GroupChatMessageEditNotification(sender,chatID , MessageDB.get(messageID))) }
+
+        return Error.NONE.toJson()
     }
 }
