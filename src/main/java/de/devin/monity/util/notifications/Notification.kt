@@ -8,7 +8,6 @@ interface Notification {
 
     val from: UUID
     val name: String
-
     fun toJson(): JSONObject
 
 }

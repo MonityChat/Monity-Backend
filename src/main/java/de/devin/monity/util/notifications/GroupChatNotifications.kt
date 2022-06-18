@@ -11,7 +11,7 @@ class GroupChatMessageReceivedNotification(private val sender: UUID, private val
     override val from: UUID
         get() = sender
     override val name: String
-        get() = "notification:chat:group:message:received"
+        get() = "chat:group:message:received"
 
     override fun toJson(): JSONObject {
         val json = JSONObject()
@@ -29,7 +29,7 @@ class GroupChatMessageDeletedNotification(private val sender: UUID, private val 
     override val from: UUID
         get() = sender
     override val name: String
-        get() = "notification:chat:group:message:deleted"
+        get() = "chat:group:message:deleted"
 
     override fun toJson(): JSONObject {
         val json = JSONObject()
@@ -47,7 +47,7 @@ class GroupChatMessageEditNotification(private val sender: UUID, private val cha
     override val from: UUID
         get() = sender
     override val name: String
-        get() = "notification:chat:group:message:edit"
+        get() = "chat:group:message:edit"
 
     override fun toJson(): JSONObject {
         val json = JSONObject()

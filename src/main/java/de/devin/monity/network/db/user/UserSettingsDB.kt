@@ -8,7 +8,7 @@ import java.util.UUID
 
 
 enum class FriendRequestLevel { ALL, FRIENDS_OF_FRIENDS, NONE }
-enum class DataOptions { ALL, ONLY_CONTACTS, NONE}
+enum class DataOptions { ALL, ONLY_CONTACTS, NONE }
 data class UserSettings(val id: UUID, val friendRequestLevel: FriendRequestLevel, val dataOptions: DataOptions)
 object UserSettingsDB: Table("user_settings"), DBManager<UserSettings, UUID> {
 
@@ -16,6 +16,7 @@ object UserSettingsDB: Table("user_settings"), DBManager<UserSettings, UUID> {
     private val friendRequestLevel = varchar("user_settings_request_level", 50)
     private val dataOptions = varchar("user_settings_data_options", 50)
 
+    override val primaryKey = PrimaryKey(userID)
     override fun load() {
         SchemaUtils.createMissingTablesAndColumns(this)
     }

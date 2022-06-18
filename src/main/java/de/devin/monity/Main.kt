@@ -12,6 +12,7 @@ import de.devin.monity.network.wsrouting.ActionHandler
 import de.devin.monity.network.wsrouting.WebSocketHandler
 import de.devin.monity.network.wsrouting.WebSocketHandler.send
 import de.devin.monity.util.Status
+import de.devin.monity.util.TypingManager
 import de.devin.monity.util.html.respondHomePage
 import filemanagment.filemanagers.ConfigFileManager
 import filemanagment.util.ConsoleColors
@@ -52,6 +53,7 @@ object Monity {
         logInfo("Connecting to Database ${ConsoleColors.YELLOW}${config.getSQLHost()}:${config.getSQLPort()}/${config.getSQLDatabase()}")
         runDatabase()
         ActionHandler.loadDefaultActions()
+        TypingManager.loadTimer()
     }
 
     private fun runHTTPServer() {
@@ -124,7 +126,7 @@ object Monity {
             password = config.getSQLPassword()
             jdbcUrl = "jdbc:mariadb://${config.getSQLHost()}:${config.getSQLPort()}/${config.getSQLDatabase()}"
             driverClassName = "org.mariadb.jdbc.Driver"
-            maximumPoolSize = 10
+            maximumPoolSize = 4
         }
 
         db = Database.connect(HikariDataSource(hikariConfig))
@@ -140,6 +142,7 @@ object Monity {
             MediaDB.load()
             MessageDB.load()
             UserSettingsDB.load()
+            ReactionDB.load()
         }
     }
 }

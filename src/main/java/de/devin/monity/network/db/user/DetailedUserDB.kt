@@ -12,6 +12,10 @@ fun createDefaultUser(username: String, uuid: UUID): UserProfile {
     return UserProfile(username, "/images/monity/default.png", uuid, "Hi im new here", Status.ONLINE, "I LOVE Monity", System.currentTimeMillis(), Status.ONLINE)
 }
 
+fun createAnonymousUser(username: String, uuid: UUID): UserProfile {
+    return UserProfile(username, "/images/monity/default.png", uuid, "", Status.OFFLINE, "", System.currentTimeMillis(), Status.OFFLINE)
+}
+
 data class UserProfile(val userName: String,
                        val profileImageLocation: String,
                        val uuid: UUID,

@@ -34,7 +34,7 @@ object WebSocketHandler {
      */
     suspend fun handleIncomingRequest(socket: DefaultWebSocketSession) {
         var valid = true
-        Timer("schedule", false).schedule(5000) {
+        Timer("WebSocketTimeOutTimer", false).schedule(5000) {
             valid = false
             runBlocking {
                 if (!isValidConnection(socket)) {
@@ -62,7 +62,6 @@ object WebSocketHandler {
 
                     if (!reader.json.has("auth")) return socket.send(Error.INVALID_JSON_FORMAT)
                     if (!reader.json.has("user")) return socket.send(Error.INVALID_JSON_FORMAT)
-
 
                     val authKey = reader.json.getString("auth")
                     val userName = reader.json.getString("user")

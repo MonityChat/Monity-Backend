@@ -11,15 +11,13 @@ import java.util.*
 class PrivateChatCreatedNotification(private val creator: UUID, private val chat: ChatData): Notification {
 
     override val from: UUID = creator
-    override val name: String = "notification:chat:private:created"
+    override val name: String = "chat:private:created"
 
     override fun toJson(): JSONObject {
         val json = JSONObject()
         json.put("notification", name)
 
-        val userJson = toJSON(UserDB.get(creator))
-
-        json.put("content", JSONObject().put("from", userJson).put("chat", toJSON(chat)))
+        json.put("content", JSONObject().put("from", UserDB.get(creator).username).put("chat", toJSON(chat)))
         return json
     }
 }
@@ -28,15 +26,13 @@ class PrivateChatMessageReceivedNotification(private val sender: UUID,private va
     override val from: UUID
         get() = sender
     override val name: String
-        get() = "notification:chat:private:message:received"
+        get() = "chat:private:message:received"
 
     override fun toJson(): JSONObject {
         val json = JSONObject()
         json.put("notification", name)
 
-        val userJson = toJSON(UserDB.get(sender))
-
-        json.put("content", JSONObject().put("from", userJson).put("message", toJSON(message)).put("chat", chatID.toString()))
+        json.put("content", JSONObject().put("from", UserDB.get(sender).username).put("message", toJSON(message)))
         return json
     }
 }
@@ -45,15 +41,13 @@ class PrivateChatMessageDeletedNotification(private val sender: UUID, private va
     override val from: UUID
         get() = sender
     override val name: String
-        get() = "notification:chat:private:message:deleted"
+        get() = "chat:private:message:deleted"
 
     override fun toJson(): JSONObject {
         val json = JSONObject()
         json.put("notification", name)
 
-        val userJson = toJSON(UserDB.get(sender))
-
-        json.put("content", JSONObject().put("from", userJson).put("messageID", toJSON(message)).put("chat", chatID.toString()))
+        json.put("content", JSONObject().put("from", UserDB.get(sender).username).put("messageID", toJSON(message)).put("chat", chatID.toString()))
         return json
     }
 }
@@ -63,15 +57,13 @@ class PrivateChatUserReactedToMessageNotification(private val sender: UUID, priv
     override val from: UUID
         get() = sender
     override val name: String
-        get() = "notification:chat:private:message:reacted"
+        get() = "chat:private:message:reacted"
 
     override fun toJson(): JSONObject {
         val json = JSONObject()
         json.put("notification", name)
 
-        val userJson = toJSON(UserDB.get(sender))
-
-        json.put("content", JSONObject().put("from", userJson).put("reaction", toJSON(reactionData)).put("chat", chatID.toString()))
+        json.put("content", JSONObject().put("from", UserDB.get(sender).username).put("reaction", toJSON(reactionData)).put("chat", chatID.toString()))
         return json
     }
 }
@@ -80,15 +72,28 @@ class PrivateChatMessageEditNotification(private val sender: UUID, private val c
     override val from: UUID
         get() = sender
     override val name: String
-        get() = "notification:chat:private:message:edit"
+        get() = "chat:private:message:edit"
 
     override fun toJson(): JSONObject {
         val json = JSONObject()
         json.put("notification", name)
 
-        val userJson = toJSON(UserDB.get(sender))
+        json.put("content", JSONObject().put("from", UserDB.get(sender).username).put("message", toJSON(message)).put("chat", chatID.toString()))
+        return json
+    }
+}
 
-        json.put("content", JSONObject().put("from", userJson).put("message", toJSON(message)).put("chat", chatID.toString()))
+class PrivateChatMessageReadNotification(private val sender: UUID, private val chatID: UUID): Notification {
+    override val from: UUID
+        get() = sender
+    override val name: String
+        get() = "chat:private:message:read"
+
+    override fun toJson(): JSONObject {
+        val json = JSONObject()
+        json.put("notification", name)
+
+        json.put("content", JSONObject().put("from", UserDB.get(sender).username).put("chat", chatID.toString()))
         return json
     }
 }

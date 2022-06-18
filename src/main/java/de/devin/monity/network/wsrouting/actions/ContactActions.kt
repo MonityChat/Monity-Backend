@@ -2,10 +2,8 @@ package de.devin.monity.network.wsrouting.actions
 
 import de.devin.monity.network.db.chat.ChatDB
 import de.devin.monity.network.db.chat.MessageData
-import de.devin.monity.network.db.user.DetailedUserDB
-import de.devin.monity.network.db.user.FriendData
-import de.devin.monity.network.db.user.UserContactDB
-import de.devin.monity.network.db.user.UserDB
+import de.devin.monity.network.db.user.*
+import de.devin.monity.network.httprouting.UserData
 import de.devin.monity.util.toJSON
 import org.json.JSONArray
 import org.json.JSONObject
@@ -125,17 +123,25 @@ class ContactGetAction: Action {
     override fun execute(sender: UUID, request: JSONObject): JSONObject {
         val contacts = UserContactDB.getContactsFrom(sender)
 
+        var chatID: UUID? = null
+
         val contactsArray = JSONArray()
         contacts.forEach { contact ->
             var amount = 0
             var latestUnread: MessageData? = null
             if (ChatDB.hasPrivateChat(sender, contact)) {
                 val chat = ChatDB.getPrivateChatBetween(sender, contact)
+                chatID = chat.id
                 amount = chat.messages.count { it.sender != contact && it.status == MessageStatus.PENDING }
                 latestUnread = chat.messages.maxByOrNull { it.index }!!
             }
-            contactsArray.put(toJSON(DetailedUserDB.get(contact)).put("unreadMessages", amount).put("lastUnread", if (latestUnread == null) "null" else toJSON(latestUnread)))
+
+            contactsArray.put(toJSON(DetailedUserDB.get(contact))
+                .put("chatID", if (chatID == null) "null" else chatID)
+                .put("unreadMessages", amount)
+                .put("lastUnread", if (latestUnread == null) "null" else toJSON(latestUnread)))
         }
+
         return JSONObject().put("contacts", contactsArray)
     }
 }
@@ -167,8 +173,36 @@ class ContactSearchAction: Action {
         val userArray = JSONArray()
 
         for (user in users) {
-            userArray.put(toJSON(DetailedUserDB.get(user.uuid)))
+            val settings = UserSettingsDB.get(user.uuid)
+
+            if (settings.friendRequestLevel == FriendRequestLevel.ALL) {
+                val profile = getUserProfileBasedOnSettings(settings, user, sender)
+                userArray.put(toJSON(profile))
+            }
+            if (settings.friendRequestLevel == FriendRequestLevel.FRIENDS_OF_FRIENDS) {
+                val friendsOfUser = UserHandler.getOfflineUser(user.uuid).contacts
+                if (friendsOfUser.any { UserContactDB.areFriends(sender, it) }) {
+                    val profile = getUserProfileBasedOnSettings(settings, user, sender)
+                    userArray.put(toJSON(profile))
+                }
+            }
+
         }
         return JSONObject().put("users", userArray)
     }
+
+    private fun getUserProfileBasedOnSettings(settings: UserSettings, user: UserData, sender: UUID): UserProfile {
+        return when (settings.dataOptions) {
+            DataOptions.NONE -> { createAnonymousUser(user.username, user.uuid) }
+            DataOptions.ALL -> { DetailedUserDB.get(user.uuid) }
+            DataOptions.ONLY_CONTACTS -> {
+                if (UserContactDB.areFriends(sender, user.uuid)) {
+                    DetailedUserDB.get(user.uuid)
+                } else {
+                    createAnonymousUser(user.username, user.uuid)
+                }
+            }
+        }
+    }
+
 }

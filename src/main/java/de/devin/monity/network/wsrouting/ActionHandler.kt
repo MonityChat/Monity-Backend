@@ -34,11 +34,15 @@ object ActionHandler {
         registerAction(PrivateChatGetMessages())
         registerAction(PrivateChatEditMessage())
         registerAction(PrivateChatReactMessage())
+        registerAction(PrivateChatMessageRead())
 
 
         //User Settings
         registerAction(UserSettingsGetAction())
         registerAction(UserSettingsChangeAction())
+
+        //User actions
+        registerAction(UserStartTyping())
 
 
     }
