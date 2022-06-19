@@ -26,22 +26,39 @@ object ActionHandler {
         //Profile actions
         registerAction(ProfileUpdateAction())
         registerAction(ProfileGetSelfAction())
+        registerAction(ProfileGetOtherAction())
 
         //Private chat actions
-        registerAction(PrivateChatSendMessage())
-        registerAction(PrivateChatDeleteMessage())
-        registerAction(PrivateChatGetLatestMessages())
-        registerAction(PrivateChatGetMessages())
-        registerAction(PrivateChatEditMessage())
-        registerAction(PrivateChatReactMessage())
-        registerAction(PrivateChatMessageRead())
+        registerAction(PrivateChatSendMessageAction())
+        registerAction(PrivateChatDeleteMessageAction())
+        registerAction(PrivateChatGetLatestMessagesAction())
+        registerAction(PrivateChatGetMessagesAction())
+        registerAction(PrivateChatEditMessageAction())
+        registerAction(PrivateChatReactMessageAction())
+        registerAction(PrivateChatMessageReadAction())
+
+        //Group chat actions
+        registerAction(GroupChatSendMessageAction())
+        registerAction(GroupChatEditMessageAction())
+        registerAction(GroupChatDeleteMessageAction())
+        registerAction(GroupChatCreateAction())
+
+        registerAction(GroupChatInviteUserAction())
+        registerAction(GroupChatCancelInviteAction())
+        registerAction(GroupChatAcceptInviteAction())
+        registerAction(GroupChatDeclineInviteAction())
+
+        registerAction(GroupChatRequestInviteAction())
+        registerAction(GroupChatDeclineRequestAction())
+        registerAction(GroupChatAcceptRequestAction())
+
 
         //User Settings
         registerAction(UserSettingsGetAction())
         registerAction(UserSettingsChangeAction())
 
         //User actions
-        registerAction(UserStartTyping())
+        registerAction(UserTypingAction())
 
     }
     private fun registerAction(action: Action) {

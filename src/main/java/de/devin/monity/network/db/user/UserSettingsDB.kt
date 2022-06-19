@@ -39,7 +39,6 @@ object UserSettingsDB: Table("user_settings"), DBManager<UserSettings, UUID> {
             }
         }
     }
-
     fun setUserDataOptions(id: UUID, dataOptions: DataOptions) {
         transaction {
             update ({userID eq id.toString()}) {
@@ -47,7 +46,6 @@ object UserSettingsDB: Table("user_settings"), DBManager<UserSettings, UUID> {
             }
         }
     }
-
     fun setUserRequestLevel(id: UUID, requestLevel: FriendRequestLevel) {
         transaction {
             update({ userID eq id.toString() }) {
@@ -55,5 +53,4 @@ object UserSettingsDB: Table("user_settings"), DBManager<UserSettings, UUID> {
             }
         }
     }
-
 }

@@ -16,6 +16,7 @@ interface DBManager<TYPE, ID> {
     /**
      * Has the given object saved in the database
      * @param id id
+     * @return boolean weather it's included in the database or not
      */
     fun has(id: ID): Boolean
 

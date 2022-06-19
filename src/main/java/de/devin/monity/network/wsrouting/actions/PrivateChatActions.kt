@@ -12,7 +12,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.util.*
 
-class PrivateChatSendMessage: Action {
+class PrivateChatSendMessageAction: Action {
 
     override val name: String
         get() = "chat:private:send:message"
@@ -57,7 +57,7 @@ class PrivateChatSendMessage: Action {
     }
 }
 
-class PrivateChatGetLatestMessages: Action {
+class PrivateChatGetLatestMessagesAction: Action {
     override val name: String
         get() = "chat:private:get:messages:latest"
     override val parameters: List<Parameter>
@@ -90,7 +90,7 @@ class PrivateChatGetLatestMessages: Action {
     }
 }
 
-class PrivateChatGetMessages: Action {
+class PrivateChatGetMessagesAction: Action {
     override val name: String
         get() = "chat:private:get:messages"
     override val parameters: List<Parameter>
@@ -112,7 +112,7 @@ class PrivateChatGetMessages: Action {
     }
 }
 
-class PrivateChatDeleteMessage: Action {
+class PrivateChatDeleteMessageAction: Action {
 
     override val name: String
         get() = "chat:private:delete:message"
@@ -139,7 +139,7 @@ class PrivateChatDeleteMessage: Action {
     }
 }
 
-class PrivateChatReactMessage: Action {
+class PrivateChatReactMessageAction: Action {
 
     override val name: String
         get() = "chat:private:react:message"
@@ -163,7 +163,7 @@ class PrivateChatReactMessage: Action {
     }
 }
 
-class PrivateChatEditMessage: Action {
+class PrivateChatEditMessageAction: Action {
     override val name: String
         get() = "chat:private:edit:message"
     override val parameters: List<Parameter>
@@ -192,7 +192,7 @@ class PrivateChatEditMessage: Action {
     }
 }
 
-class PrivateChatMessageRead: Action {
+class PrivateChatMessageReadAction: Action {
 
     override val name: String
         get() = "chat:private:read:message"

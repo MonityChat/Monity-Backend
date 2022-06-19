@@ -1,19 +1,21 @@
 package de.devin.monity.network.wsrouting.actions
 
+import com.google.gson.Gson
 import de.devin.monity.network.db.chat.*
+import de.devin.monity.network.db.user.FriendRequestLevel
+import de.devin.monity.network.db.user.UserContactDB
+import de.devin.monity.network.db.user.UserSettingsDB
 import de.devin.monity.util.Error
 import de.devin.monity.util.GroupRole
 import de.devin.monity.util.MessageStatus
 import de.devin.monity.util.dataconnectors.UserHandler
-import de.devin.monity.util.notifications.GroupChatMessageDeletedNotification
-import de.devin.monity.util.notifications.GroupChatMessageEditNotification
-import de.devin.monity.util.notifications.GroupChatMessageReceivedNotification
+import de.devin.monity.util.notifications.*
 import de.devin.monity.util.toJSON
 import org.json.JSONObject
 import java.util.*
 
 
-class GroupChatSendMessage: Action {
+class GroupChatSendMessageAction: Action {
 
     override val name: String
         get() = "chat:group:send:message"
@@ -51,14 +53,17 @@ class GroupChatSendMessage: Action {
 
         MessageDB.insert(message)
 
-        chat.members.forEach{ UserHandler.sendNotificationIfOnline(it.id, GroupChatMessageReceivedNotification(sender, chatID, message))}
 
+        chat.members.forEach{ UserHandler.sendNotificationIfOnline(it.id, GroupChatMessageReceivedNotification(sender, chatID, message))}
+        chat.members.forEach {
+            GroupMessageStatusDB.insert(GroupMessageStatus(messageID, chatID, it.id, if (UserHandler.isOnline(it.id)) MessageStatus.RECEIVED else MessageStatus.PENDING))
+        }
         return toJSON(message).put("author", user.getUserName())
     }
 }
 
 
-class GroupChatMessageDelete: Action {
+class GroupChatDeleteMessageAction: Action {
     override val name: String
         get() = "chat:group:delete:message"
     override val parameters: List<Parameter>
@@ -74,6 +79,8 @@ class GroupChatMessageDelete: Action {
         if (!MessageDB.has(messageID)) return Error.MESSAGE_NOT_FOUND.toJson()
 
         MessageDB.removeMessage(messageID)
+        GroupMessageStatusDB.deleteAllMessages(messageID)
+
         val chat = GroupDB.get(chatID)
 
         chat.members.forEach {UserHandler.sendNotificationIfOnline(it.id, GroupChatMessageDeletedNotification(sender, chatID, messageID)) }
@@ -82,7 +89,7 @@ class GroupChatMessageDelete: Action {
     }
 }
 
-class GroupChatMessageEdit: Action {
+class GroupChatEditMessageAction: Action {
     override val name: String
         get() = "chat:group:delete:edit"
     override val parameters: List<Parameter>
@@ -101,8 +108,234 @@ class GroupChatMessageEdit: Action {
         MessageDB.editMessageContent(messageID, request.getString("newContent"))
         val chat = GroupDB.get(chatID)
 
-        chat.members.forEach {UserHandler.sendNotificationIfOnline(it.id, GroupChatMessageEditNotification(sender,chatID , MessageDB.get(messageID))) }
+        chat.members.forEach {UserHandler.sendNotificationIfOnline(it.id, GroupChatMessageEditNotification(sender, chatID, MessageDB.get(messageID))) }
 
         return Error.NONE.toJson()
     }
 }
+
+class GroupChatCreateAction: Action {
+
+    override val name: String
+        get() = "chat:group:create"
+    override val parameters: List<Parameter>
+        get() = listOf(Parameter("invites"), Parameter("profile"), Parameter("settings"))
+
+    override fun execute(sender: UUID, request: JSONObject): JSONObject {
+
+        val invites = request.getJSONArray("invites").map { it.toString() }
+        val profileObject = request.getJSONObject("profile")
+        val profile = Gson().fromJson(profileObject.toString(), GroupProfile::class.java)
+
+        val settingsObject = request.getJSONObject("settings")
+        val settings = Gson().fromJson(settingsObject.toString(), GroupSettings::class.java)
+
+
+        val groupID = GroupDB.newUUID()
+        val groupInvites = invites.map { GroupInvite(UUID.fromString(it), groupID) }
+        val groupChat = GroupChatData(sender, listOf(GroupMemberData(sender, groupID, GroupRole.OWNER)), listOf(), groupID, System.currentTimeMillis(), settings, groupInvites, profile)
+
+        GroupDB.insert(groupChat)
+        GroupSettingDB.insert(settings)
+        GroupProfileDB.insert(profile)
+        groupInvites.forEach { GroupMemberInvitesDB.insert(listOf(it)) }
+
+        return toJSON(groupChat)
+    }
+}
+
+class GroupChatRequestInviteAction: Action {
+    override val name: String
+        get() = "chat:group:request"
+    override val parameters: List<Parameter>
+        get() = listOf(Parameter("groupID"), Parameter("content"))
+
+    override fun execute(sender: UUID, request: JSONObject): JSONObject {
+        val groupID = UUID.fromString(request.getString("groupID"))
+        if (!GroupDB.has(groupID)) return Error.GROUP_NOT_FOUND.toJson()
+
+        val settings = GroupSettingDB.get(groupID)
+
+        if (GroupMemberDB.isInGroup(sender, groupID)) return Error.USER_ALREADY_IN_GROUP.toJson()
+        if (!settings.requiresRequest) return Error.GROUP_DOES_NOT_REQUIRE_REQUEST.toJson()
+        if (!settings.opened) return Error.GROUP_IS_CLOSED.toJson()
+        if (GroupRequestDB.hasRequested(sender, groupID)) return Error.ALREADY_MADE_REQUEST.toJson()
+
+        val requestContent = request.getString("content")
+        val groupRequest = GroupRequest(sender, groupID, requestContent)
+        GroupRequestDB.insert(listOf(groupRequest))
+
+        for (moderator in GroupMemberDB.get(groupID).filter { it.role == GroupRole.MODERATOR }) {
+            UserHandler.sendNotificationIfOnline(moderator.id, GroupChatUserRequestedJoinNotification(sender, groupID, requestContent))
+        }
+
+        return Error.NONE.toJson()
+    }
+}
+
+class GroupChatDeclineRequestAction: Action {
+
+    override val name: String
+        get() = "chat:group:request:decline"
+    override val parameters: List<Parameter>
+        get() = listOf(Parameter("groupID"), Parameter("target"))
+
+    override fun execute(sender: UUID, request: JSONObject): JSONObject {
+        val targetUUID = UUID.fromString(request.getString("target"))
+        val groupID = UUID.fromString(request.getString("groupID"))
+        if (!GroupDB.has(groupID)) return Error.GROUP_NOT_FOUND.toJson()
+
+        if (!GroupRequestDB.hasRequested(targetUUID, groupID)) return Error.USER_DID_NOT_REQUEST.toJson()
+
+        GroupRequestDB.removeRequest(targetUUID, groupID)
+        UserHandler.sendNotificationIfOnline(targetUUID, GroupChatRequestDeclinedNotification(sender, targetUUID, groupID))
+
+        for (moderator in GroupMemberDB.get(groupID).filter { it.role == GroupRole.MODERATOR }) {
+            UserHandler.sendNotificationIfOnline(moderator.id, GroupChatRequestDeclinedNotification(sender, targetUUID, groupID))
+        }
+
+        return Error.NONE.toJson()
+    }
+}
+
+class GroupChatAcceptRequestAction: Action {
+
+    override val name: String
+        get() = "chat:group:request:accept"
+    override val parameters: List<Parameter>
+        get() = listOf(Parameter("groupID"), Parameter("target"))
+
+    override fun execute(sender: UUID, request: JSONObject): JSONObject {
+        val targetUUID = UUID.fromString(request.getString("target"))
+        val groupID = UUID.fromString(request.getString("groupID"))
+        if (!GroupDB.has(groupID)) return Error.GROUP_NOT_FOUND.toJson()
+
+        if (!GroupRequestDB.hasRequested(targetUUID, groupID)) return Error.USER_DID_NOT_REQUEST.toJson()
+
+        GroupRequestDB.removeRequest(targetUUID, groupID)
+        val member = GroupMemberData(targetUUID, groupID, GroupRole.MEMBER)
+        GroupMemberDB.insert(listOf(member))
+
+        UserHandler.sendNotificationIfOnline(targetUUID, GroupChatRequestAcceptedNotification(sender, targetUUID, groupID))
+
+        for (moderator in GroupMemberDB.get(groupID).filter { it.role == GroupRole.MODERATOR }) {
+            UserHandler.sendNotificationIfOnline(moderator.id, GroupChatRequestAcceptedNotification(sender, targetUUID, groupID))
+        }
+
+        for (groupMember in GroupMemberDB.get(groupID)) {
+            UserHandler.sendNotificationIfOnline(groupMember.id, GroupChatUserJoinedNotification(sender, groupID))
+        }
+
+        return Error.NONE.toJson()
+    }
+}
+
+class GroupChatInviteUserAction: Action {
+
+    override val name: String
+        get() = "chat:group:invite:user"
+    override val parameters: List<Parameter>
+        get() = listOf(Parameter("target"), Parameter("groupID"))
+
+    override fun execute(sender: UUID, request: JSONObject): JSONObject {
+        val targetUUID = UUID.fromString(request.getString("target"))
+        val groupID = UUID.fromString(request.getString("groupID"))
+
+        if (!GroupDB.has(groupID)) return Error.GROUP_NOT_FOUND.toJson()
+
+        val settings = GroupSettingDB.get(groupID)
+        val role = GroupMemberDB.getGroupMemberFor(groupID, sender)
+
+        if (UserContactDB.hasBlocked(targetUUID, sender)) return Error.TARGET_BLOCKED_USER.toJson()
+        if (settings.whoCanInvite.weight > role.role.weight) return Error.UNAUTHORIZED.toJson()
+
+        val userSettingsOfTarget = UserSettingsDB.get(targetUUID)
+
+        if (userSettingsOfTarget.friendRequestLevel == FriendRequestLevel.NONE) return Error.CANT_INVITE_USER_DUE_TO_PRIVATE_SETTINGS.toJson()
+
+        val invite = GroupInvite(targetUUID, groupID)
+        GroupMemberInvitesDB.insert(listOf(invite))
+
+        for (member in GroupMemberDB.get(groupID)) {
+            UserHandler.sendNotificationIfOnline(member.id, GroupChatUserInvitedUserNotification(sender, targetUUID, groupID))
+        }
+        UserHandler.sendNotificationIfOnline(targetUUID, GroupChatUserInvitedYouNotification(sender, groupID))
+
+        return Error.NONE.toJson()
+    }
+}
+
+class GroupChatAcceptInviteAction: Action {
+
+    override val name: String
+        get() = "chat:group:invite:accepted"
+    override val parameters: List<Parameter>
+        get() = listOf(Parameter("groupID"))
+
+    override fun execute(sender: UUID, request: JSONObject): JSONObject {
+        val groupID = UUID.fromString(request.getString("groupID"))
+        if (!GroupDB.has(groupID)) return Error.GROUP_NOT_FOUND.toJson()
+
+        if (!GroupMemberInvitesDB.userInvitedToGroup(groupID, sender)) return Error.USER_NOT_INVITED.toJson()
+        GroupMemberInvitesDB.deleteInvitation(groupID, sender)
+        val member = GroupMemberData(sender, groupID, GroupRole.MEMBER)
+        GroupMemberDB.insert(listOf(member))
+
+        for (groupMember in GroupMemberDB.get(groupID)) {
+            UserHandler.sendNotificationIfOnline(groupMember.id, GroupChatUserJoinedNotification(sender, groupID))
+        }
+
+        return toJSON(GroupProfileDB.get(groupID))
+    }
+}
+
+class GroupChatDeclineInviteAction: Action {
+
+    override val name: String
+        get() = "chat:group:invite:accepted"
+    override val parameters: List<Parameter>
+        get() = listOf(Parameter("groupID"))
+
+    override fun execute(sender: UUID, request: JSONObject): JSONObject {
+        val groupID = UUID.fromString(request.getString("groupID"))
+        if (!GroupDB.has(groupID)) return Error.GROUP_NOT_FOUND.toJson()
+
+        if (!GroupMemberInvitesDB.userInvitedToGroup(groupID, sender)) return Error.USER_NOT_INVITED.toJson()
+        GroupMemberInvitesDB.deleteInvitation(groupID, sender)
+        val member = GroupMemberData(sender, groupID, GroupRole.MEMBER)
+        GroupMemberDB.insert(listOf(member))
+
+        return toJSON(GroupProfileDB.get(groupID))
+    }
+}
+
+class GroupChatCancelInviteAction: Action {
+
+    override val name: String
+        get() = "chat:group:invite:cancel"
+    override val parameters: List<Parameter>
+        get() = listOf(Parameter("target"), Parameter("groupID"))
+
+    override fun execute(sender: UUID, request: JSONObject): JSONObject {
+        val targetUUID = UUID.fromString(request.getString("target"))
+        val groupID = UUID.fromString(request.getString("groupID"))
+
+        if (!GroupDB.has(groupID)) return Error.GROUP_NOT_FOUND.toJson()
+
+        val role = GroupMemberDB.getGroupMemberFor(groupID, sender)
+
+        if (role.role.weight < GroupRole.MODERATOR.weight) return Error.UNAUTHORIZED.toJson()
+        if (!GroupMemberInvitesDB.userInvitedToGroup(groupID, targetUUID)) return Error.USER_NOT_INVITED.toJson()
+
+        GroupMemberInvitesDB.deleteInvitation(groupID, targetUUID)
+
+        for (member in GroupMemberDB.get(groupID)) {
+            UserHandler.sendNotificationIfOnline(member.id, GroupChatInvitationCanceledNotification(sender, targetUUID, groupID))
+        }
+
+        UserHandler.sendNotificationIfOnline(targetUUID, GroupChatUserCanceledYourInvitationNotification(sender, groupID))
+
+        return Error.NONE.toJson()
+    }
+}
+

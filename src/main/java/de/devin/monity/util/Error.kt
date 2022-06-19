@@ -97,6 +97,11 @@ enum class Error {
     ALREADY_MADE_CONTACT,
 
     /**
+     * Occurs when a user has already requested to join a group
+     */
+    ALREADY_MADE_REQUEST,
+
+    /**
      * Occurs when a user tries to perform an action on a target but blocked the target
      */
     USER_BLOCKED_TARGET,
@@ -126,11 +131,46 @@ enum class Error {
      */
     INVALID_SETTING,
 
+    /**
+     * Occurs when the given group does not exist
+     */
+    GROUP_NOT_FOUND,
+
+    /**
+     * Occurs when a user tries to join a group where he is already included
+     */
+    USER_ALREADY_IN_GROUP,
+
+    /**
+     * Occurs when a user tries to join a group where no request is needed
+     */
+    GROUP_DOES_NOT_REQUIRE_REQUEST,
+
+    /**
+     * Occurs when a user tries to join a group which is closed
+     */
+    GROUP_IS_CLOSED,
 
     /**
      * Occurs when a users tries to perform an action on a target but the target the blocked the user
      */
     INVALID_FRIEND_DECLINE_REQUEST,
+
+
+    /**
+     * Occurs when a moderator accepts/decline a non-existing request
+     */
+    USER_DID_NOT_REQUEST,
+
+    /**
+     * Occurs when a user is not permitted to invite a user to a group
+     */
+    CANT_INVITE_USER_DUE_TO_PRIVATE_SETTINGS,
+
+    /**
+     * Occurs when an invitation is canceled, but it doesn't exist
+     */
+    USER_NOT_INVITED,
 
     /**
      * Occurs when a users tries to send another request to a user

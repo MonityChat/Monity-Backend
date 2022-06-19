@@ -27,6 +27,19 @@ class ProfileUpdateAction: Action {
     }
 }
 
+class ProfileGetOtherAction: Action {
+    override val name: String
+        get() = "profile:get:self"
+    override val parameters: List<Parameter>
+        get() = listOf(Parameter("target"))
+
+    override fun execute(sender: UUID, request: JSONObject): JSONObject {
+        val targetUUID = UUID.fromString(request.getString("target"))
+        val profile = DetailedUserDB.get(targetUUID)
+        return toJSON(profile)
+    }
+}
+
 class ProfileGetSelfAction: Action {
 
     override val name: String

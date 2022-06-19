@@ -32,7 +32,6 @@ class UserSettingsChangeAction: Action {
         val value = request.getString("value")
 
         when (setting) {
-
             "dataOption" -> {
                 UserSettingsDB.setUserDataOptions(sender, DataOptions.valueOf(value))
             }

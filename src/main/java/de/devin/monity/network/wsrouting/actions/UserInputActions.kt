@@ -7,7 +7,7 @@ import de.devin.monity.util.Error
 import de.devin.monity.util.dataconnectors.UserHandler
 import de.devin.monity.util.notifications.UserStartedTypingNotification
 
-class UserStartTyping: Action {
+class UserTypingAction: Action {
 
     override val name: String
         get() = "user:action:typing"
@@ -27,6 +27,5 @@ class UserStartTyping: Action {
         UserHandler.sendNotificationIfOnline(targetUUID, UserStartedTypingNotification(sender, chatID))
 
         return Error.NONE.toJson()
-
     }
 }

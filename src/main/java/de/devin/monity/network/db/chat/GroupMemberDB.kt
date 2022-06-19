@@ -2,11 +2,8 @@ package de.devin.monity.network.db.chat
 
 import de.devin.monity.network.db.util.DBManager
 import de.devin.monity.util.GroupRole
-import org.jetbrains.exposed.sql.SchemaUtils
+import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.Table
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.util.UUID
 
@@ -32,6 +29,9 @@ object GroupMemberDB: Table("group_members"), DBManager<List<GroupMemberData>, U
         return transaction { select { userID eq user.toString() }.map { UUID.fromString(it[groupID]) } }
     }
 
+    fun isInGroup(user: UUID, group: UUID): Boolean {
+        return transaction { select((groupID eq group.toString()) and (userID eq user.toString())).count() > 0 }
+    }
     fun getGroupMemberFor(chatID: UUID, user: UUID): GroupMemberData {
         return get(chatID).first { it.id == user }
     }

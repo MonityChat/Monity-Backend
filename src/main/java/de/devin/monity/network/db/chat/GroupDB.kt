@@ -27,6 +27,7 @@ data class GroupChatData(val initiator: UUID,
                          val id: UUID,
                          val started: Long,
                          val groupSettings: GroupSettings,
+                         val groupInvites: List<GroupInvite>,
                          val groupProfile: GroupProfile,)
 
 
@@ -65,10 +66,17 @@ object GroupDB: Table("groups"), DBManager<GroupChatData, UUID> {
                     id,
                     it[started],
                     GroupSettingDB.get(id),
+                    GroupMemberInvitesDB.get(id),
                     GroupProfileDB.get(id)
                 )
             }[0]
         }
+    }
+
+    fun newUUID(): UUID {
+        var uuid = UUID.randomUUID()
+        while (has(uuid)) uuid = UUID.randomUUID()
+        return uuid
     }
 
     fun getGroupsWhereUserIsIncluded(user: UUID): Set<GroupChatData> {
