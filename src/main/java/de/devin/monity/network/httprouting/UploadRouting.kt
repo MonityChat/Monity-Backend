@@ -3,9 +3,14 @@ package de.devin.monity.network.httprouting
 import de.devin.monity.network.auth.AuthLevel
 import de.devin.monity.network.db.chat.MediaDB
 import de.devin.monity.network.db.chat.MediaData
+import de.devin.monity.network.db.user.DataOptions
 import de.devin.monity.network.db.user.DetailedUserDB
+import de.devin.monity.network.db.user.UserSettingsDB
 import de.devin.monity.util.FileManager
+import de.devin.monity.util.dataconnectors.UserHandler
+import de.devin.monity.util.notifications.UserUpdatesProfileNotification
 import de.devin.monity.util.validUUID
+import filemanagment.util.logInfo
 import io.ktor.application.*
 import io.ktor.http.*
 import io.ktor.http.content.*
@@ -44,20 +49,29 @@ fun Route.UploadImage() {
             }
             DetailedUserDB.updateProfilePicture(uuid, path)
 
+
+            if (UserSettingsDB.get(uuid).dataOptions != DataOptions.NONE) {
+                for (contact in UserHandler.getOnlineUser(uuid).contacts) {
+                    UserHandler.sendNotificationIfOnline(contact, UserUpdatesProfileNotification(uuid))
+                }
+            }
+
+
             call.respondText(DetailedUserDB.get(uuid).profileImageLocation, status = HttpStatusCode.OK)
         }
 
         post ("/chatFile") {
             if (!authRoute(this.call, AuthLevel.AUTH_LEVEL_USER)) return@post call.respondText("Unauthorized", status = HttpStatusCode.Unauthorized)
             val chatIDString = call.request.queryParameters["chatID"] ?: return@post call.respondText("Missing parameter uuid", status = HttpStatusCode.BadRequest)
-            val fileType = call.request.queryParameters["fileType"] ?: return@post call.respondText("Missing parameter fileType", status = HttpStatusCode.BadRequest)
             val fileName = call.request.queryParameters["fileName"] ?: return@post call.respondText("Missing parameter fileName", status = HttpStatusCode.BadRequest)
             var embedIDRaw = call.request.queryParameters["embedID"] ?: return@post call.respondText("Missing parameter embedID", status = HttpStatusCode.BadRequest)
 
-            if (embedIDRaw.isEmpty()) {
+            var newMediaRequest = false
+            if (embedIDRaw == "na") {
                 var randomID = UUID.randomUUID()
                 while (MediaDB.has(randomID)) randomID = UUID.randomUUID()
                 embedIDRaw = randomID.toString()
+                newMediaRequest = true
             }
 
             if (!validUUID(chatIDString)) return@post call.respondText("Invalid parameter UUID", status = HttpStatusCode.BadRequest)
@@ -65,11 +79,12 @@ fun Route.UploadImage() {
 
             val embedID = UUID.fromString(embedIDRaw)
 
-            if (!MediaDB.has(embedID)) return@post call.respondText("EmbedID does not exist", status = HttpStatusCode.NotFound)
+            if (!newMediaRequest)
+                if (!MediaDB.has(embedID)) return@post call.respondText("EmbedID does not exist", status = HttpStatusCode.NotFound)
 
             val uuid = UUID.fromString(chatIDString)
 
-            val file = FileManager.getNewFileToUploadFile(uuid, embedID, fileType, fileName)
+            val file = FileManager.getNewFileToUploadFile(uuid, embedID, fileName)
 
             val path = file.absolutePath.split("\\data")[1]
             val multipartData = call.receiveMultipart()
@@ -86,9 +101,10 @@ fun Route.UploadImage() {
             val uploadedMedia = MediaData(embedID, path)
             MediaDB.insertSingle(uploadedMedia)
 
-            val json = JSONObject().put("path", path).put("embedid", embedID)
 
-            call.respondText(json.toString(), status = HttpStatusCode.OK)
+            val json = JSONObject().put("path", path).put("embedID", embedID)
+
+            return@post call.respondText(json.toString(), status = HttpStatusCode.OK)
         }
     }
 }

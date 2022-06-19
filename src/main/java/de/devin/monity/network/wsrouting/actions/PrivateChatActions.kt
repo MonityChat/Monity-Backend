@@ -1,15 +1,19 @@
 package de.devin.monity.network.wsrouting.actions
 
+import de.devin.monity.LocationGetter
 import de.devin.monity.network.db.chat.*
 import de.devin.monity.network.db.user.UserContactDB
 import de.devin.monity.network.db.user.UserDB
 import de.devin.monity.util.Error
 import de.devin.monity.util.MessageStatus
+import de.devin.monity.util.TypingManager
 import de.devin.monity.util.dataconnectors.UserHandler
 import de.devin.monity.util.notifications.*
 import de.devin.monity.util.toJSON
+import filemanagment.util.logInfo
 import org.json.JSONArray
 import org.json.JSONObject
+import java.io.File
 import java.util.*
 
 class PrivateChatSendMessageAction: Action {
@@ -42,18 +46,28 @@ class PrivateChatSendMessageAction: Action {
 
         val messageID = MessageDB.getFreeUUID()
         val index = MessageDB.getNextIndex(chat.id)
-        val embeds = if (embedID.isNotEmpty()) MediaDB.get(UUID.fromString(embedID)) else listOf()
+
+
+        val embeds = if (embedID.isNotEmpty()) MediaDB.get(UUID.fromString(embedID)) else emptyList()
         val related = if (relatedID.isNotEmpty()) MessageDB.get(UUID.fromString(relatedID)) else null
 
         val status = if (UserHandler.isOnline(targetUUID)) MessageStatus.RECEIVED else MessageStatus.PENDING
 
-        val message = MessageData(sender, messageID, chat.id, content, related, embeds, listOf(), index, sent, false, status)
+        val message = MessageData(sender, messageID, chat.id, content, related, embeds, emptyList(), index, sent, false, status)
+
 
 
         MessageDB.insert(message)
         UserHandler.sendNotificationIfOnline(targetUUID, PrivateChatMessageReceivedNotification(sender, chat.id, message))
 
-        return toJSON(message).put("author", UserDB.get(sender).username)
+        TypingManager.stoppedTypingBecauseSendMessage(sender, targetUUID, chat.id)
+
+        val json = toJSON(message)
+        if (message.relatedTo != null) {
+            json.getJSONObject("relatedTo").put("relatedAuthor", UserDB.get(message.relatedTo.sender).username)
+        }
+
+        return json.put("author", UserDB.get(sender).username)
     }
 }
 
@@ -74,13 +88,19 @@ class PrivateChatGetLatestMessagesAction: Action {
         if (!ChatDB.has(chatID)) return Error.CHAT_NOT_FOUND.toJson()
         val chat = ChatDB.get(chatID)
 
-        val messages = chat.messages.sortedByDescending { it.index }.slice(0..Math.min(50, chat.messages.size - 1))
+        val messages = chat.messages.sortedByDescending { it.index }.slice(0..50.coerceAtMost(chat.messages.size - 1))
 
         chat.messages.forEach { if(it.sender != sender) MessageDB.editMessageStatus(it.messageID, MessageStatus.READ)}
 
         val json = JSONObject()
         val messagesArray = JSONArray()
-        messages.forEach { messagesArray.put(toJSON(it).put("author", UserDB.get(it.sender).username)) }
+        messages.forEach {
+            val json = toJSON(it)
+            if (it.relatedTo != null) {
+                json.getJSONObject("relatedTo").put("relatedAuthor", UserDB.get(it.relatedTo.sender).username)
+            }
+            messagesArray.put(json.put("author", UserDB.get(it.sender).username))
+        }
 
         val target = if (chat.initiator == sender) chat.otherUser else chat.initiator
 
@@ -125,13 +145,25 @@ class PrivateChatDeleteMessageAction: Action {
         val messageIDRaw = request.getString("messageID")
         val messageID = UUID.fromString(messageIDRaw)
 
-
         if (!ChatDB.has(chatID)) return Error.CHAT_NOT_FOUND.toJson()
         if (!MessageDB.has(messageID)) return Error.MESSAGE_NOT_FOUND.toJson()
 
+        val message = MessageDB.get(messageID)
+
+        for (media in message.attachedMedia) {
+            val file = File(LocationGetter().getLocation().absolutePath + "/../data${media.filePath}")
+            file.delete()
+        }
+
+        MediaDB.deleteIfExists(messageID)
         MessageDB.removeMessage(messageID)
+        if (message.attachedMedia.isNotEmpty()) {
+            ReactionDB.deleteReactions(message.attachedMedia[0].id)
+        }
+
         val chat = ChatDB.get(chatID)
         val otherUser = if (chat.initiator == sender) chat.otherUser else chat.initiator
+
 
         UserHandler.sendNotificationIfOnline(otherUser, PrivateChatMessageDeletedNotification(sender, chatID, messageID))
 

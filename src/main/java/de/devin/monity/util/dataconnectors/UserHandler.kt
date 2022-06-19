@@ -32,8 +32,6 @@ object UserHandler {
         if (!exists(uuid)) error("UUID not found")
         if (!isOnline(uuid)) error("UUID is not online")
 
-        val data = UserDB.get(uuid)
-        val profile = DetailedUserDB.get(uuid)
 
         val socket = WebSocketHandler.getConnection(uuid)
         return OnlineUser(uuid, socket)

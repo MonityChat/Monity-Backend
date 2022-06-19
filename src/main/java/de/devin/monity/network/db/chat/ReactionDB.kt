@@ -15,7 +15,6 @@ object ReactionDB: Table("message_reactions"), DBManager<ReactionData, UUID> {
     private val id = varchar("reaction_id", 36)
     private val reactor = varchar("reaction_reactor_id", 36)
     private val messageID = varchar("reaction_message_id", 36)
-
     override fun load() {
         SchemaUtils.createMissingTablesAndColumns(this)
     }
@@ -61,7 +60,11 @@ object ReactionDB: Table("message_reactions"), DBManager<ReactionData, UUID> {
         return get(id)
     }
 
-    fun newUUID(): UUID {
+    fun deleteReactions(messageID: UUID) {
+        deleteWhere { ReactionDB.messageID eq messageID.toString() }
+    }
+
+    private fun newUUID(): UUID {
         var uuid = UUID.randomUUID()
         while (has(uuid)) uuid = UUID.randomUUID()
         return uuid

@@ -28,6 +28,7 @@ object MessageDB: Table("messages"), DBManager<MessageData, UUID> {
     private val sent = long("message_timestamp_sent")
     private val index = long("message_index")
     private val relatedTo = varchar("message_relation_id", 36).nullable()
+    private val mediaID = varchar("message_media_id", 36).nullable()
     private val edited = bool("message_edited")
     private val status = varchar("message_status", 50)
 
@@ -53,8 +54,8 @@ object MessageDB: Table("messages"), DBManager<MessageData, UUID> {
                 UUID.fromString(it[muid]),
                 UUID.fromString(it[chatID]),
                 it[content],
-                if (it[relatedTo] != "null") get(UUID.fromString(it[relatedTo])) else null,
-                MediaDB.get(id),
+                if (it[relatedTo] != null) get(UUID.fromString(it[relatedTo])) else null,
+                if (it[mediaID] != null) MediaDB.get(UUID.fromString(it[mediaID])) else emptyList(),
                 ReactionDB.getReactionsForMessage(id),
                 it[index],
                 it[sent],
@@ -104,8 +105,9 @@ object MessageDB: Table("messages"), DBManager<MessageData, UUID> {
                 it[content] = obj.content
                 it[sent] = obj.sent
                 it[muid] = obj.messageID.toString()
+                it[mediaID] = if (obj.attachedMedia.isNotEmpty()) obj.attachedMedia[0].id.toString() else null
                 it[index] = obj.index
-                it[relatedTo] = obj.relatedTo?.messageID.toString()
+                it[relatedTo] = if (obj.relatedTo != null) obj.relatedTo.messageID.toString() else null
                 it[edited] = obj.edited
                 it[status] = obj.status.toString()
             }

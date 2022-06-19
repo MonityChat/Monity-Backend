@@ -33,7 +33,7 @@ import java.io.File
 import java.net.URLDecoder
 
 val bootLocation = LocationGetter().getLocation()
-const val version = "1.2.9"
+const val version = "1.3.0"
 const val name = "Monity"
 
 fun main() {
@@ -86,18 +86,23 @@ object Monity {
 
                         //User successfully connected
                         val user = WebSocketHandler.getUserFrom(this)
-                        user.setStatus(user.profile.preferredStatus)
+                        WebSocketHandler.executeLoginActions(user.uuid)
 
                         for (frame in this.incoming) {
                             val returnPacket = WebSocketHandler.handleIncomingContent(frame, this)
                             send(returnPacket)
                         }
                     }catch (e: ClosedReceiveChannelException) {
-                        val user = WebSocketHandler.getUserFrom(this)
-                        logInfo("Closing websocket to User ${user.getUserName()}")
+                        val user = WebSocketHandler.getOldUUIDFrom(this)
+                        logInfo("Closing websocket to User $user")
                         WebSocketHandler.closed(this)
-                        user.setStatus(Status.OFFLINE)
+
+                        WebSocketHandler.executeLogoutActions(user)
                     }catch (e: Throwable) {
+                        val user = WebSocketHandler.getOldUUIDFrom(this)
+                        logInfo("Closing websocket to User $user")
+                        WebSocketHandler.closed(this)
+                        WebSocketHandler.executeLogoutActions(user)
                         e.printStackTrace()
                     }
                 }
@@ -126,7 +131,10 @@ object Monity {
             password = config.getSQLPassword()
             jdbcUrl = "jdbc:mariadb://${config.getSQLHost()}:${config.getSQLPort()}/${config.getSQLDatabase()}"
             driverClassName = "org.mariadb.jdbc.Driver"
-            maximumPoolSize = 4
+            maximumPoolSize = 3
+            minimumIdle = 1
+            idleTimeout = 1000
+            maxLifetime = 60000
         }
 
         db = Database.connect(HikariDataSource(hikariConfig))

@@ -1,8 +1,12 @@
 package de.devin.monity.network.wsrouting.actions
 
+import de.devin.monity.network.db.user.DataOptions
 import de.devin.monity.network.db.user.DetailedUserDB
 import de.devin.monity.network.db.user.UserProfile
+import de.devin.monity.network.db.user.UserSettingsDB
 import de.devin.monity.util.Status
+import de.devin.monity.util.dataconnectors.UserHandler
+import de.devin.monity.util.notifications.UserUpdatesProfileNotification
 import de.devin.monity.util.toJSON
 import org.json.JSONObject
 import java.util.*
@@ -21,15 +25,21 @@ class ProfileUpdateAction: Action {
 
         val oldProfile = DetailedUserDB.get(sender)
         val newProfile = UserProfile(oldProfile.userName, oldProfile.profileImageLocation, sender, description, status, shortStatus, oldProfile.lastSeen, status)
-
         DetailedUserDB.updateProfile(sender, newProfile)
+
+        if (UserSettingsDB.get(sender).dataOptions != DataOptions.NONE) {
+            for (contact in UserHandler.getOnlineUser(sender).contacts) {
+                UserHandler.sendNotificationIfOnline(contact, UserUpdatesProfileNotification(sender))
+            }
+        }
+
         return toJSON(newProfile)
     }
 }
 
 class ProfileGetOtherAction: Action {
     override val name: String
-        get() = "profile:get:self"
+        get() = "profile:get:other"
     override val parameters: List<Parameter>
         get() = listOf(Parameter("target"))
 

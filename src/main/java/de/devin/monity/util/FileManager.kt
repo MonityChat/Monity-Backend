@@ -23,11 +23,11 @@ object FileManager {
         return file
     }
 
-    fun getNewFileToUploadFile(chatID: UUID, embedID: UUID, fileType: String, fileName: String): File {
+    fun getNewFileToUploadFile(chatID: UUID, embedID: UUID, fileName: String): File {
 
-        var file = File(LocationGetter().getLocation().absolutePath + "/../data/images/chats/$chatID/$embedID/$fileName.$fileType")
+        var file = File(LocationGetter().getLocation().absolutePath + "/../data/images/chats/$chatID/$embedID/$fileName")
         while (file.exists()) {
-            file = File(LocationGetter().getLocation().absolutePath + "/../data/images/chats/$chatID/$embedID/${fileName + UUID.randomUUID()}.$fileType")
+            file = File(LocationGetter().getLocation().absolutePath + "/../data/images/chats/$chatID/$embedID/${fileName + UUID.randomUUID()}")
         }
         file.parentFile.mkdirs()
         return file

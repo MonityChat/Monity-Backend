@@ -25,15 +25,21 @@ object TypingManager {
                     }
                 }
             }
-        }, 0, 500)
+        }, 0, 1500)
     }
 
     fun startedTyping(user: UUID, target: UUID, chatID: UUID) {
         typingUsers[TypeData(user, target, chatID)] = 2
     }
 
+    fun stoppedTypingBecauseSendMessage(user: UUID, target: UUID, chatID: UUID) {
+        val data = typingUsers.keys.first { it.typer == user && it.target == target && it.chatID == chatID }
+        typingUsers.remove(data)
+        UserHandler.sendNotificationIfOnline(data.target, UserStoppedTypingNotification(data.typer, data.chatID))
+    }
+
     fun typeUpdate(user: UUID, target: UUID, chatID: UUID) {
-        val data = typingUsers.keys.filter { it.typer == user && it.target == target && it.chatID == chatID }.first()
+        val data = typingUsers.keys.first { it.typer == user && it.target == target && it.chatID == chatID }
         typingUsers[data] = 2
     }
 

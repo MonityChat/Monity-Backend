@@ -62,6 +62,12 @@ object DetailedUserDB: Table("user_profile"), DBManager<UserProfile, UUID> {
         }
     }
 
+    fun updateLastSeen(user: UUID) {
+        transaction {
+            update({ uuid eq user.toString()}) { it[lastSeen] = System.currentTimeMillis() }
+        }
+    }
+
     fun updateProfilePicture(user: UUID, url: String) {
         transaction {
             update({ uuid eq user.toString() }) {

@@ -26,6 +26,10 @@ class ContactAddAction: Action {
 
         val senderUserProfile = DetailedUserDB.get(sender)
 
+        if (sender == targetUUID) {
+            return Error.ALREADY_MADE_CONTACT.toJson()
+        }
+
         if (UserContactDB.areFriends(sender, targetUUID)) {
             return Error.ALREADY_MADE_CONTACT.toJson()
         }
@@ -132,8 +136,8 @@ class ContactGetAction: Action {
             if (ChatDB.hasPrivateChat(sender, contact)) {
                 val chat = ChatDB.getPrivateChatBetween(sender, contact)
                 chatID = chat.id
-                amount = chat.messages.count { it.sender != contact && it.status == MessageStatus.PENDING }
-                latestUnread = chat.messages.maxByOrNull { it.index }!!
+                amount = chat.messages.count { it.sender != sender && (it.status == MessageStatus.PENDING || it.status == MessageStatus.RECEIVED) }
+                latestUnread = chat.messages.maxByOrNull { it.index }
             }
 
             contactsArray.put(toJSON(DetailedUserDB.get(contact))
@@ -168,7 +172,8 @@ class ContactSearchAction: Action {
     override fun execute(sender: UUID, request: JSONObject): JSONObject {
         val keyWord = request.getString("keyword")
 
-        val users = UserDB.getUsersLike(keyWord)
+        val users = UserDB.getUsersLike(keyWord).toMutableList()
+        users -= UserDB.get(sender)
 
         val userArray = JSONArray()
 

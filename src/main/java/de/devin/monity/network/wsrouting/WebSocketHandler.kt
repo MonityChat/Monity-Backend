@@ -3,14 +3,17 @@ package de.devin.monity.network.wsrouting
 import de.devin.monity.model.OnlineUser
 import de.devin.monity.network.auth.AuthHandler
 import de.devin.monity.network.auth.AuthLevel
-import de.devin.monity.network.db.user.UserDB
-import de.devin.monity.util.Error
-import de.devin.monity.util.SimpleJSONReader
+import de.devin.monity.network.db.chat.MessageDB
+import de.devin.monity.network.db.user.*
+import de.devin.monity.util.*
 import de.devin.monity.util.dataconnectors.UserHandler
-import de.devin.monity.util.toJSONString
-import de.devin.monity.util.validUUID
+import de.devin.monity.util.notifications.PrivateChatMessageReceivedNotification
+import de.devin.monity.util.notifications.PrivateChatUserReceivedMessagesNotification
+import de.devin.monity.util.notifications.UserWentOfflineNotification
+import de.devin.monity.util.notifications.UserWentOnlineNotification
 import filemanagment.util.logInfo
 import io.ktor.http.cio.websocket.*
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.runBlocking
 import org.json.JSONObject
 import java.util.*
@@ -33,11 +36,12 @@ object WebSocketHandler {
      * @param socket the incoming socket
      */
     suspend fun handleIncomingRequest(socket: DefaultWebSocketSession) {
+        logInfo("Handling incoming websocket")
         var valid = true
         Timer("WebSocketTimeOutTimer", false).schedule(5000) {
             valid = false
             runBlocking {
-                if (!isValidConnection(socket)) {
+                if (!isValidFreshConnection(socket)) {
                     logInfo("Closing Websocket connection because verification timed out")
                     socket.close(CloseReason(CloseReason.Codes.TRY_AGAIN_LATER, "Verification time timed out"))
                 }
@@ -77,6 +81,7 @@ object WebSocketHandler {
 
                     val user = UserDB.getByUserOrEmail(userName)
 
+                    logInfo("Allowing connection to pass from $userName")
                     socketAuthMap[user.uuid] = socket
                     valid = true
 
@@ -91,6 +96,48 @@ object WebSocketHandler {
                 }
             }
         }
+    }
+
+    /**
+     * Will execute all default actions when a user connects to the webserver
+     * @param user who logged in
+     */
+    fun executeLoginActions(user: UUID) {
+        if (!UserHandler.isOnline(user)) error("Cant execute login actions when user is offline")
+
+        //Alle nachrichten auf erhalten setzen
+        val onlineUser = UserHandler.getOnlineUser(user)
+        for (chat in onlineUser.privateChats) {
+            for (message in chat.messages.filter { it.sender != onlineUser.uuid }) {
+                if (message.status == MessageStatus.PENDING) {
+                    MessageDB.editMessageStatus(message.messageID, MessageStatus.RECEIVED)
+                    UserHandler.sendNotificationIfOnline(if (chat.initiator == user) chat.otherUser else chat.initiator,
+                        PrivateChatUserReceivedMessagesNotification(user, chat.id))
+                }
+            }
+        }
+        //Seinen eingestellten Status setzen
+        onlineUser.setStatus(DetailedUserDB.get(user).preferredStatus)
+
+        for (contact in onlineUser.contacts) {
+            UserHandler.sendNotificationIfOnline(contact, UserWentOnlineNotification(user))
+        }
+
+        onlineUser.updateLastSeen()
+    }
+
+    /**
+     * Will execute when a user logs of
+     * @param user logging off
+     */
+    fun executeLogoutActions(user: UUID) {
+        DetailedUserDB.setStatus(user, Status.OFFLINE)
+
+        for (contact in UserContactDB.getContactsFrom(user)) {
+            UserHandler.sendNotificationIfOnline(contact, UserWentOfflineNotification(user))
+        }
+
+        DetailedUserDB.updateLastSeen(user)
     }
 
     /**
@@ -114,8 +161,6 @@ object WebSocketHandler {
             else -> return Error.INVALID_JSON_FORMAT.toJson()
         }
 
-        logInfo("Received request $text")
-
         val reader = SimpleJSONReader(text)
         if (!reader.valid) return Error.INVALID_JSON_FORMAT.toJson()
 
@@ -125,8 +170,7 @@ object WebSocketHandler {
 
         val action = json.getString("action")
 
-        val back = ActionHandler.handleIncomingActionRequest(getAccordingUserTo(session), action, json)
-        return back
+        return ActionHandler.handleIncomingActionRequest(getAccordingUserTo(session), action, json)
     }
 
     private fun getAccordingUserTo(session: DefaultWebSocketSession): UUID {
@@ -139,6 +183,9 @@ object WebSocketHandler {
         socketAuthMap.remove(user)
     }
 
+    fun getOldUUIDFrom(session: DefaultWebSocketSession): UUID {
+        return socketAuthMap.keys.first { socketAuthMap[it] == session }
+    }
     fun getUserFrom(session: DefaultWebSocketSession): OnlineUser {
         return UserHandler.getOnlineUser(getAccordingUserTo(session))
     }
@@ -192,6 +239,10 @@ object WebSocketHandler {
         return socketAuthMap[uuid]!!
     }
     fun isValidConnection(session: DefaultWebSocketSession): Boolean {
+        return socketAuthMap.containsValue(session) && session.isActive
+    }
+
+    private fun isValidFreshConnection(session: DefaultWebSocketSession): Boolean {
         return socketAuthMap.containsValue(session)
     }
 }

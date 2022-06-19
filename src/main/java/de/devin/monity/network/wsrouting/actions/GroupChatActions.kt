@@ -265,6 +265,26 @@ class GroupChatInviteUserAction: Action {
     }
 }
 
+class GroupChatKickMember: Action {
+
+
+    override val name: String
+        get() = "chat:group:kick"
+    override val parameters: List<Parameter>
+        get() = listOf(Parameter("groupID"), Parameter("target"))
+
+    override fun execute(sender: UUID, request: JSONObject): JSONObject {
+        val targetUUID = UUID.fromString(request.getString("target"))
+        val groupID = UUID.fromString(request.getString("groupID"))
+
+        if (!GroupDB.has(groupID)) return Error.GROUP_NOT_FOUND.toJson()
+
+        //if (GroupMemberDB.get())
+
+        return Error.NONE.toJson()
+    }
+}
+
 class GroupChatAcceptInviteAction: Action {
 
     override val name: String
