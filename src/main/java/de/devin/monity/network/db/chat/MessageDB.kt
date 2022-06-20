@@ -87,7 +87,13 @@ object MessageDB: Table("messages"), DBManager<MessageData, UUID> {
     }
 
     fun removeMessage(messageID: UUID) {
-        transaction { deleteWhere { muid eq messageID.toString() } }
+        transaction {
+            update({relatedTo eq messageID.toString()}) {
+                it[relatedTo] = null
+            }
+            deleteWhere { muid eq messageID.toString() }
+        }
+
     }
 
     fun editMessageContent(messageID: UUID, content: String) {

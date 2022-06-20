@@ -156,6 +156,10 @@ enum class Error {
      */
     INVALID_FRIEND_DECLINE_REQUEST,
 
+    /**
+     * Occurs when a user tries to edit/delete a message where he is not the sender of
+     */
+    NOT_MESSAGE_AUTHOR,
 
     /**
      * Occurs when a moderator accepts/decline a non-existing request

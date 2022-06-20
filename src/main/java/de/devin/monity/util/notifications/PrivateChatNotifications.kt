@@ -63,7 +63,7 @@ class PrivateChatMessageDeletedNotification(private val sender: UUID, private va
         val json = JSONObject()
         json.put("notification", name)
 
-        json.put("content", JSONObject().put("from", UserDB.get(sender).username).put("messageID", toJSON(message)).put("chat", chatID.toString()))
+        json.put("content", JSONObject().put("from", UserDB.get(sender).username).put("messageID", message).put("chat", chatID.toString()))
         return json
     }
 }

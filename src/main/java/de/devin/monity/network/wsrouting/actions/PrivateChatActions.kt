@@ -60,7 +60,8 @@ class PrivateChatSendMessageAction: Action {
         MessageDB.insert(message)
         UserHandler.sendNotificationIfOnline(targetUUID, PrivateChatMessageReceivedNotification(sender, chat.id, message))
 
-        TypingManager.stoppedTypingBecauseSendMessage(sender, targetUUID, chat.id)
+        if (TypingManager.isTyping(sender, targetUUID, chat.id))
+            TypingManager.stoppedTypingBecauseSendMessage(sender, targetUUID, chat.id)
 
         val json = toJSON(message)
         if (message.relatedTo != null) {
@@ -127,8 +128,23 @@ class PrivateChatGetMessagesAction: Action {
 
         val chat = ChatDB.get(chatID)
 
-        val messages = chat.messages.sortedByDescending { it.index }.slice(start..start+amount)
-        return toJSON(messages)
+        val messages = mutableListOf<MessageData>()
+        for (number in (start - amount).coerceAtLeast(0)..start) {
+            messages += chat.messages.first {it.index == number.toLong()}
+        }
+        val returnList = messages.sortedByDescending { it.index }
+
+        val json = JSONObject()
+        val messagesArray = JSONArray()
+        returnList.forEach {
+            val json = toJSON(it)
+            if (it.relatedTo != null) {
+                json.getJSONObject("relatedTo").put("relatedAuthor", UserDB.get(it.relatedTo.sender).username)
+            }
+            messagesArray.put(json.put("author", UserDB.get(it.sender).username))
+        }
+
+        return json.put("messages", messagesArray)
     }
 }
 
@@ -150,6 +166,8 @@ class PrivateChatDeleteMessageAction: Action {
 
         val message = MessageDB.get(messageID)
 
+        if (message.sender != sender) return Error.NOT_MESSAGE_AUTHOR.toJson()
+
         for (media in message.attachedMedia) {
             val file = File(LocationGetter().getLocation().absolutePath + "/../data${media.filePath}")
             file.delete()
@@ -167,7 +185,7 @@ class PrivateChatDeleteMessageAction: Action {
 
         UserHandler.sendNotificationIfOnline(otherUser, PrivateChatMessageDeletedNotification(sender, chatID, messageID))
 
-        return Error.NONE.toJson()
+        return JSONObject().put("message", messageID)
     }
 }
 
@@ -210,6 +228,9 @@ class PrivateChatEditMessageAction: Action {
 
         if (!ChatDB.has(chatID)) return Error.CHAT_NOT_FOUND.toJson()
         if (!MessageDB.has(messageID)) return Error.MESSAGE_NOT_FOUND.toJson()
+        val message = MessageDB.get(messageID)
+        if (message.sender != sender) return Error.NOT_MESSAGE_AUTHOR.toJson()
+
 
         MessageDB.editMessageContent(messageID, request.getString("newContent"))
 

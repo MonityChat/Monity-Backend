@@ -100,6 +100,7 @@ object Monity {
 
                         WebSocketHandler.executeLogoutActions(user)
                     }catch (e: Throwable) {
+                        if (!WebSocketHandler.isValidConnection(this)) return@webSocket
                         val user = WebSocketHandler.getOldUUIDFrom(this)
                         logInfo("Closing websocket to User $user")
                         WebSocketHandler.closed(this)
