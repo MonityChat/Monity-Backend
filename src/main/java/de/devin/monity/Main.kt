@@ -46,6 +46,7 @@ object Monity {
     private lateinit var db: Database
     val dataFolder = File(LocationGetter().getLocation().absolutePath + "/../data")
     fun boot() {
+        logInfo("Data: ${dataFolder.absolutePath}")
         logInfo("Launching $name ${ConsoleColors.GREEN}v.$version")
         logInfo("Launching HTTP Server on port ${ConsoleColors.YELLOW}${config.getHTTPPort()}")
         runHTTPServer()

@@ -18,13 +18,16 @@ class UserTypingAction: Action {
         val targetUUID = UUID.fromString(request.getString("target"))
         val chatID = UUID.fromString(request.getString("chatID"))
 
+        if (!TypingManager.isTyping(sender, targetUUID, chatID)) {
+            UserHandler.sendNotificationIfOnline(targetUUID, UserStartedTypingNotification(sender, chatID))
+        }
+
         if (TypingManager.isTyping(sender, targetUUID, chatID)) {
             TypingManager.typeUpdate(sender, targetUUID, chatID)
         } else {
             TypingManager.startedTyping(sender, targetUUID, chatID)
         }
 
-        UserHandler.sendNotificationIfOnline(targetUUID, UserStartedTypingNotification(sender, chatID))
 
         return Error.NONE.toJson()
     }

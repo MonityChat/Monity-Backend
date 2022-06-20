@@ -33,7 +33,7 @@ fun Route.UploadImage() {
             val uuid = UUID.fromString(uuidString)
             val file = FileManager.getNewFileToUploadProfilePicture(uuid, fileType)
 
-            val path = file.absolutePath.split("\\data")[1]
+            val path = file.absolutePath.replace("/","\\").split("\\data")[1]
 
             val multipartData = call.receiveMultipart()
 

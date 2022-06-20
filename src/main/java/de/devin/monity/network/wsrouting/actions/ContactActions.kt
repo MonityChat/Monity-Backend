@@ -1,6 +1,7 @@
 package de.devin.monity.network.wsrouting.actions
 
 import de.devin.monity.network.db.chat.ChatDB
+import de.devin.monity.network.db.chat.ChatData
 import de.devin.monity.network.db.chat.MessageData
 import de.devin.monity.network.db.user.*
 import de.devin.monity.network.httprouting.UserData
@@ -14,6 +15,7 @@ import de.devin.monity.util.MessageStatus
 import de.devin.monity.util.dataconnectors.UserHandler
 import de.devin.monity.util.notifications.ContactAddNotification
 import de.devin.monity.util.notifications.ContactAddRequestNotification
+import de.devin.monity.util.notifications.PrivateChatCreatedNotification
 
 class ContactAddAction: Action {
 
@@ -46,6 +48,9 @@ class ContactAddAction: Action {
 
         val friendData = FriendData(sender, targetUUID, FriendStatus.PENDING)
         UserContactDB.insert(listOf(friendData))
+        val chat = ChatData(sender, targetUUID, ChatDB.newID(), System.currentTimeMillis(), listOf())
+        ChatDB.insert(chat)
+        UserHandler.sendNotificationIfOnline(targetUUID, PrivateChatCreatedNotification(sender, chat))
 
         UserHandler.sendNotificationIfOnline(targetUUID, ContactAddRequestNotification(senderUserProfile))
         return Error.NONE.toJson()
@@ -74,6 +79,9 @@ class ContactAcceptAction: Action {
 
         UserHandler.sendNotificationIfOnline(targetUUID, ContactAddNotification(DetailedUserDB.get(sender)))
         UserContactDB.updateStatus(targetUUID, sender, FriendStatus.ACCEPTED)
+        val chat = ChatData(sender, targetUUID, ChatDB.newID(), System.currentTimeMillis(), listOf())
+        ChatDB.insert(chat)
+        UserHandler.sendNotificationIfOnline(targetUUID, PrivateChatCreatedNotification(sender, chat))
         return toJSON(DetailedUserDB.get(targetUUID))
     }
 }
