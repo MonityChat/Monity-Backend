@@ -76,7 +76,10 @@ object Monity {
             }
 
             //Websockets extensions
-            install(WebSockets)
+            install(WebSockets) {
+                pingPeriodMillis = 5000
+                timeoutMillis = 10000
+            }
             install(Routing)
 
 
@@ -97,18 +100,27 @@ object Monity {
                             send(returnPacket)
                         }
                     }catch (e: ClosedReceiveChannelException) {
+                        logInfo("Closed")
                         val user = WebSocketHandler.getOldUUIDFrom(this)
                         logInfo("Closing websocket to User $user")
                         WebSocketHandler.closed(this)
 
                         WebSocketHandler.executeLogoutActions(user)
                     }catch (e: Throwable) {
+                        logInfo("Closed")
                         if (!WebSocketHandler.isValidConnection(this)) return@webSocket
                         val user = WebSocketHandler.getOldUUIDFrom(this)
                         logInfo("Closing websocket to User $user")
                         WebSocketHandler.closed(this)
                         WebSocketHandler.executeLogoutActions(user)
                         e.printStackTrace()
+                    } finally {
+                        logInfo("Closed")
+                        val user = WebSocketHandler.getOldUUIDFrom(this)
+                        logInfo("Closing websocket to User $user")
+                        WebSocketHandler.closed(this)
+
+                        WebSocketHandler.executeLogoutActions(user)
                     }
                 }
             }

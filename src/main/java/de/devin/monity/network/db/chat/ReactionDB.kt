@@ -36,7 +36,7 @@ object ReactionDB: Table("message_reactions"), DBManager<ReactionData, String> {
     }
 
     fun getReactionCount(messageID: UUID, reaction: String): Long  {
-        return transaction { select((ReactionDB.messageID eq messageID.toString() and (ReactionDB.reaction eq reaction))).count()  }
+        return transaction { select((ReactionDB.messageID eq messageID.toString() and (ReactionDB.reaction eq reaction))).map { it[count] } }[0]
     }
 
     fun addReactionToMessage(messageID: UUID, reaction: String) {

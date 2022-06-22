@@ -84,6 +84,7 @@ class PrivateChatGetLatestMessagesAction: Action {
         if (chatIDRaw.isEmpty())
             return JSONObject().put("messages", JSONArray())
 
+
         val chatID = UUID.fromString(chatIDRaw)
 
         if (!ChatDB.has(chatID)) return Error.CHAT_NOT_FOUND.toJson()
@@ -217,7 +218,7 @@ class PrivateChatReactMessageAction: Action {
             messageJSON.getJSONObject("message").getJSONObject("relatedTo").put("relatedAuthor", UserDB.get(message.relatedTo.sender).username)
         }
 
-        UserHandler.sendNotificationIfOnline( if (chat.initiator == sender) chat.otherUser else chat.initiator, PrivateChatUserReactedToMessageNotification(sender, message, chat.id ))
+        UserHandler.sendNotificationIfOnline( if (chat.initiator == sender) chat.otherUser else chat.initiator, PrivateChatUserReactedToMessageNotification(sender, messageJSON, chat.id ))
 
         return messageJSON
     }
@@ -249,9 +250,17 @@ class PrivateChatEditMessageAction: Action {
         val chat = ChatDB.get(chatID)
         val otherUser = if (chat.initiator == sender) chat.otherUser else chat.initiator
 
-        UserHandler.sendNotificationIfOnline(otherUser, PrivateChatMessageEditNotification(sender, chatID, editMessage))
 
-        return toJSON(editMessage)
+        val messageJSON = JSONObject()
+        messageJSON.put("message", toJSON(editMessage))
+        messageJSON.getJSONObject("message").put("author", UserDB.get(editMessage.sender).username)
+        if (editMessage.relatedTo != null) {
+            messageJSON.getJSONObject("message").getJSONObject("relatedTo").put("relatedAuthor", UserDB.get(editMessage.relatedTo.sender).username)
+        }
+
+        UserHandler.sendNotificationIfOnline(otherUser, PrivateChatMessageEditNotification(sender, chatID, messageJSON))
+
+        return messageJSON
     }
 }
 

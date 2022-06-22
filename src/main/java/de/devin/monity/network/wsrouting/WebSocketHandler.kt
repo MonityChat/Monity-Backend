@@ -83,14 +83,14 @@ object WebSocketHandler {
                         return socket.send(Error.UNAUTHORIZED)
                     }
 
+                    if (AuthHandler.getLevel(auth).weight < AuthLevel.AUTH_LEVEL_USER.weight)
+                        return socket.send(Error.UNAUTHORIZED)
+
                     val user = UserDB.getByUserOrEmail(userName)
 
                     logInfo("Allowing connection to pass from $userName")
                     socketAuthMap[user.uuid] = socket
                     valid = true
-
-                    if (AuthHandler.getLevel(auth).weight < AuthLevel.AUTH_LEVEL_USER.weight)
-                        return socket.send(Error.UNAUTHORIZED)
 
                     return socket.send(Error.NONE)
                 }
