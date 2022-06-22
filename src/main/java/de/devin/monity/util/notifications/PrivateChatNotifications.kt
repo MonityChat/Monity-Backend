@@ -68,7 +68,7 @@ class PrivateChatMessageDeletedNotification(private val sender: UUID, private va
     }
 }
 
-class PrivateChatUserReactedToMessageNotification(private val sender: UUID, private val reactionData: ReactionData, private val chatID: UUID): Notification {
+class PrivateChatUserReactedToMessageNotification(private val sender: UUID, private val message: MessageData, private val chatID: UUID): Notification {
 
     override val from: UUID
         get() = sender
@@ -79,7 +79,13 @@ class PrivateChatUserReactedToMessageNotification(private val sender: UUID, priv
         val json = JSONObject()
         json.put("notification", name)
 
-        json.put("content", JSONObject().put("from", UserDB.get(sender).username).put("reaction", toJSON(reactionData)).put("chat", chatID.toString()))
+        json.put("message",toJSON(message))
+        if (message.relatedTo != null) {
+            json.getJSONObject("relatedTo").put("relatedAuthor", UserDB.get(message.relatedTo.sender).username)
+        }
+
+
+        json.put("content", JSONObject().put("from", UserDB.get(sender).username).put("author", UserDB.get(sender).username)).put("chat", chatID.toString())
         return json
     }
 }

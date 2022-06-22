@@ -8,79 +8,67 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import java.util.UUID
 
 
-data class ReactionData(val messageID: UUID, val reaction: String, val id: UUID, val reactors: List<UUID>)
-object ReactionDB: Table("message_reactions"), DBManager<ReactionData, UUID> {
+data class ReactionData(val messageID: UUID, val reaction: String, val count: Long)
 
-    private val reaction = varchar("reaction_reaction", 3)
-    private val id = varchar("reaction_id", 36)
-    private val reactor = varchar("reaction_reactor_id", 36)
+object ReactionDB: Table("message_reactions"), DBManager<ReactionData, String> {
+    private val reaction = varchar("reaction_reaction", 10)
+    private val count = long("count")
     private val messageID = varchar("reaction_message_id", 36)
     override fun load() {
         SchemaUtils.createMissingTablesAndColumns(this)
     }
 
-    override fun has(id: UUID): Boolean {
-        return transaction { select { ReactionDB.id eq id.toString() }.count() > 0 }
+
+    override fun has(id: String): Boolean {
+        return transaction { select { ReactionDB.reaction eq id }.count() > 0 }
     }
 
-    override fun get(id: UUID): ReactionData {
-        val reactions = transaction {
-            select(ReactionDB.id eq  id.toString()).map { ReactionData(UUID.fromString(it[messageID]), it[reaction], id, listOf(UUID.fromString(it[reactor]))) }
-        }
-
-        val reactors = mutableListOf<UUID>()
-
-        for (reaction in reactions) {
-            reactors.add(reaction.id)
-        }
-        return ReactionData(reactions[0].messageID, reactions[0].reaction, id, reactors)
+    override fun get(id: String): ReactionData {
+        return ReactionData(UUID.randomUUID(), "", 0)
     }
 
     fun getReactionsForMessage(messageID: UUID): List<ReactionData> {
-        return transaction { select (ReactionDB.messageID eq messageID.toString()) }.map { get(UUID.fromString(it[id])) }
+        return transaction { select (ReactionDB.messageID eq messageID.toString()).map { ReactionData(messageID, it[reaction], it[count]) } }
     }
 
-    fun hasUserReacted(messageID: UUID, user: UUID, reaction: String): Boolean {
-        return transaction { select ((ReactionDB.messageID eq messageID.toString()) and (reactor eq user.toString()) and (ReactionDB.reaction eq reaction)).count() > 0 }
+    fun hasMessageReaction(messageID: UUID, reaction: String): Boolean  {
+        return transaction { select((ReactionDB.messageID eq messageID.toString()) eq (ReactionDB.reaction eq reaction)).count() > 0  }
     }
 
-    fun addReactionToMessage(messageID: UUID, user: UUID, reaction: String): ReactionData {
-        val id = newUUID()
-        runBlocking {
+    fun getReactionCount(messageID: UUID, reaction: String): Long  {
+        return transaction { select((ReactionDB.messageID eq messageID.toString()) eq (ReactionDB.reaction eq reaction)).count()  }
+    }
+
+    fun addReactionToMessage(messageID: UUID, reaction: String) {
+        if (!hasMessageReaction(messageID, reaction)) {
             transaction {
                 insert {
                     it[ReactionDB.messageID] = messageID.toString()
-                    it[reactor] = user.toString()
+                    it[count] = 1
                     it[ReactionDB.reaction] = reaction
-                    it[ReactionDB.id] = id.toString()
+                }
+            }
+        } else {
+            transaction {
+                update({(ReactionDB.messageID eq messageID.toString()) and (ReactionDB.reaction eq reaction)}) {
+                    it[count] = getReactionCount(messageID, reaction) + 1
                 }
             }
         }
 
-        return get(id)
     }
 
     fun deleteReactions(messageID: UUID) {
-        deleteWhere { ReactionDB.messageID eq messageID.toString() }
-    }
-
-    private fun newUUID(): UUID {
-        var uuid = UUID.randomUUID()
-        while (has(uuid)) uuid = UUID.randomUUID()
-        return uuid
+        transaction { deleteWhere { ReactionDB.messageID eq messageID.toString() } }
     }
 
     override fun insert(obj: ReactionData) {
         transaction {
-            for (reactor in obj.reactors) {
-                insert {
-                    it[reaction] = obj.reaction
-                    it[id] = obj.id.toString()
-                    it[ReactionDB.reactor] = reactor.toString()
-                    it[messageID] = obj.messageID.toString()
-                }
+            insert {
+                it[reaction] = obj.reaction
+                it[count] = obj.count
+                it[messageID] = obj.messageID.toString()
             }
         }
-
     }
 }

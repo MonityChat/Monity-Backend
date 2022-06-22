@@ -41,6 +41,7 @@ fun Route.UserRoute() {
 
                 val error = confirmUser(id, uuid)
                 call.respond(error)
+                
             }
             "salt" -> run {
                 val username = call.request.queryParameters["username"]

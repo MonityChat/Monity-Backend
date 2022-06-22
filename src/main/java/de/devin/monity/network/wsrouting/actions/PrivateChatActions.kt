@@ -100,6 +100,7 @@ class PrivateChatGetLatestMessagesAction: Action {
             if (it.relatedTo != null) {
                 json.getJSONObject("relatedTo").put("relatedAuthor", UserDB.get(it.relatedTo.sender).username)
             }
+
             messagesArray.put(json.put("author", UserDB.get(it.sender).username))
         }
 
@@ -202,14 +203,14 @@ class PrivateChatReactMessageAction: Action {
         val reaction = request.getString("reaction")
 
         if (!MessageDB.has(messageID)) return Error.MESSAGE_NOT_FOUND.toJson()
-        if (ReactionDB.hasUserReacted(messageID, sender, reaction)) return Error.USER_ALREADY_REACTED.toJson()
 
-        val reactionData = ReactionDB.addReactionToMessage(messageID, sender, reaction)
+        ReactionDB.addReactionToMessage(messageID, reaction)
 
         val chat = ChatDB.get(MessageDB.get(messageID).chat)
-        UserHandler.sendNotificationIfOnline( if (chat.initiator == sender) chat.otherUser else chat.initiator, PrivateChatUserReactedToMessageNotification(sender,reactionData , chat.id ))
+        val message = MessageDB.get(messageID)
+        UserHandler.sendNotificationIfOnline( if (chat.initiator == sender) chat.otherUser else chat.initiator, PrivateChatUserReactedToMessageNotification(sender, message, chat.id ))
 
-        return toJSON(reactionData)
+        return JSONObject().put("message", toJSON(message))
     }
 }
 

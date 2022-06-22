@@ -86,7 +86,10 @@ fun Route.UploadImage() {
 
             val file = FileManager.getNewFileToUploadFile(uuid, embedID, fileName)
 
-            val path = file.absolutePath.split("\\data")[1]
+            logInfo(file.absolutePath)
+
+            val path = file.absolutePath.replace("/","\\").split("\\data")[1]
+
             val multipartData = call.receiveMultipart()
 
             multipartData.forEachPart { part ->
