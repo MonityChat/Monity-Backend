@@ -6,11 +6,11 @@ import de.devin.monity.network.db.user.*
 import de.devin.monity.util.Error
 import de.devin.monity.util.htmlEmail
 import filemanagment.util.logInfo
-import io.ktor.application.*
 import io.ktor.http.*
-import io.ktor.request.*
-import io.ktor.response.*
-import io.ktor.routing.*
+import io.ktor.server.application.*
+import io.ktor.server.request.*
+import io.ktor.server.routing.*
+import io.ktor.server.response.*
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
@@ -21,8 +21,7 @@ private val userEmailResetMap = HashMap<UUID, UserData>()
 
 fun Route.UserRoute() {
     get("/user/{action}") {
-        val action =
-            call.parameters["action"] ?: return@get call.respondText("Missing ", status = HttpStatusCode.BadRequest)
+        val action = call.parameters["action"] ?: return@get call.respondText("Missing ", status = HttpStatusCode.BadRequest)
 
         when (action) {
             "confirm" -> run {
@@ -73,6 +72,10 @@ fun Route.UserRoute() {
                 }
                 call.respond("OK")
             }
+            "resetPasswordRedirect" -> run {
+                val id = call.request.queryParameters["id"] ?: return@get call.respondText("Parameter ID missing", status = HttpStatusCode.BadRequest)
+                call.respondRedirect("http://localhost:3000/reset-password?id=$id")
+            }
         }
     }
 
@@ -97,6 +100,8 @@ fun Route.UserRoute() {
             e.printStackTrace()
             return@post
         }
+
+
         when (action) {
             "register" -> run {
                 error = userRegister(user.username, user.password, user.email, auth, user.salt)
@@ -136,8 +141,9 @@ private fun resetPasswordConfirm(id: UUID, newUser: UserData): Error {
         return Error.INVALID_RESET_REQUEST
     }
 
-    TODO("Implement reset password")
-    //UserDB.update(newUser)
+    val user = userEmailResetMap[id]
+    logInfo(user!!.uuid)
+    UserDB.updatePasswordAndSalt(user!!.uuid, newUser.password, newUser.salt)
 
     return Error.NONE
 
@@ -153,9 +159,9 @@ private fun resetPassword(user: UserData): Error {
 
     while (userEmailResetMap.containsKey(id)) id = UUID.randomUUID()
 
-    userEmailResetMap[id] = user
 
-    val link = "http://127.0.0.1:8808/user/reset?&id=$id&uuid=${user.uuid}"
+
+    val link = "http://127.0.0.1:8808/user/resetPasswordRedirect?&id=$id"
 
     val email = htmlEmail()
     email.addTo(user.email)
@@ -165,6 +171,7 @@ private fun resetPassword(user: UserData): Error {
 
     var htmlLines = Files.readString(Path.of("$bootLocation/../resources/email.html"))
     htmlLines = htmlLines.replace("placeholder:url", link)
+    htmlLines = htmlLines.replace("placeholder:title", "Your password reset has been acknowledged.")
     htmlLines = htmlLines.replace("placeholder:content", "To reset your password click the button below.")
     htmlLines = htmlLines.replace("placeholder:button", "Reset password")
 
@@ -178,7 +185,8 @@ private fun resetPassword(user: UserData): Error {
         return Error.EMAIL_NOT_FOUND
     }
 
-    userEmailResetMap[id] = user
+    val userData = UserDB.getByUserOrEmail(user.email)
+    userEmailResetMap[id] = userData
 
     return Error.NONE
 }
@@ -278,6 +286,7 @@ private fun resendEmail(emailAddress: String): Error {
 
     var htmlLines = Files.readString(Path.of("$bootLocation/../resources/email.html"))
     htmlLines = htmlLines.replace("placeholder:url", link)
+    htmlLines = htmlLines.replace("placeholder:title", "Thank you for creating a MONITY account!")
     htmlLines = htmlLines.replace(
         "placeholder:content",
         "Thank you for creating a Monity account.\nTo complete your registration click the link below."

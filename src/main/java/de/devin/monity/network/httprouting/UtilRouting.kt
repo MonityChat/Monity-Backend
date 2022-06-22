@@ -1,9 +1,9 @@
 package de.devin.monity.network.httprouting
 
 import de.devin.monity.Monity
-import io.ktor.application.*
-import io.ktor.response.*
-import io.ktor.routing.*
+import io.ktor.server.application.*
+import io.ktor.server.response.*
+import io.ktor.server.routing.*
 
 
 fun Route.UtilRoute() {

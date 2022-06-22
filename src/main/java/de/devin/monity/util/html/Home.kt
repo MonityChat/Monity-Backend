@@ -1,10 +1,10 @@
 package de.devin.monity.util.html
 
-import io.ktor.application.*
-import io.ktor.html.*
 import kotlinx.html.*
 import de.devin.monity.name
 import de.devin.monity.version
+import io.ktor.server.application.*
+import io.ktor.server.html.*
 
 
 suspend fun respondHomePage(call: ApplicationCall) {

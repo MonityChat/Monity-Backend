@@ -11,12 +11,12 @@ import de.devin.monity.util.dataconnectors.UserHandler
 import de.devin.monity.util.notifications.UserUpdatesProfileNotification
 import de.devin.monity.util.validUUID
 import filemanagment.util.logInfo
-import io.ktor.application.*
 import io.ktor.http.*
 import io.ktor.http.content.*
-import io.ktor.request.*
-import io.ktor.response.*
-import io.ktor.routing.*
+import io.ktor.server.application.*
+import io.ktor.server.request.*
+import io.ktor.server.response.*
+import io.ktor.server.routing.*
 import org.json.JSONObject
 import java.util.*
 
@@ -45,6 +45,7 @@ fun Route.UploadImage() {
                         val fileBytes = part.streamProvider().readBytes()
                         file.writeBytes(fileBytes)
                     }
+                    else -> {}
                 }
             }
             DetailedUserDB.updateProfilePicture(uuid, path)
@@ -65,6 +66,10 @@ fun Route.UploadImage() {
             val chatIDString = call.request.queryParameters["chatID"] ?: return@post call.respondText("Missing parameter uuid", status = HttpStatusCode.BadRequest)
             val fileName = call.request.queryParameters["fileName"] ?: return@post call.respondText("Missing parameter fileName", status = HttpStatusCode.BadRequest)
             var embedIDRaw = call.request.queryParameters["embedID"] ?: return@post call.respondText("Missing parameter embedID", status = HttpStatusCode.BadRequest)
+
+            if (!fileName.contains(".")) {
+                return@post call.respondText("Invalid file name", status = HttpStatusCode.Locked)
+            }
 
             var newMediaRequest = false
             if (embedIDRaw == "na") {
@@ -98,6 +103,7 @@ fun Route.UploadImage() {
                         val fileBytes = part.streamProvider().readBytes()
                         file.writeBytes(fileBytes)
                     }
+                    else -> {}
                 }
             }
 

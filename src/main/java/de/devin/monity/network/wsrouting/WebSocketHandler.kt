@@ -4,15 +4,17 @@ import de.devin.monity.model.OnlineUser
 import de.devin.monity.network.auth.AuthHandler
 import de.devin.monity.network.auth.AuthLevel
 import de.devin.monity.network.db.chat.MessageDB
-import de.devin.monity.network.db.user.*
+import de.devin.monity.network.db.user.DetailedUserDB
+import de.devin.monity.network.db.user.UserContactDB
+import de.devin.monity.network.db.user.UserDB
 import de.devin.monity.util.*
 import de.devin.monity.util.dataconnectors.UserHandler
-import de.devin.monity.util.notifications.PrivateChatMessageReceivedNotification
 import de.devin.monity.util.notifications.PrivateChatUserReceivedMessagesNotification
 import de.devin.monity.util.notifications.UserWentOfflineNotification
 import de.devin.monity.util.notifications.UserWentOnlineNotification
 import filemanagment.util.logInfo
-import io.ktor.http.cio.websocket.*
+import io.ktor.websocket.*
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.runBlocking
 import org.json.JSONObject
@@ -40,10 +42,12 @@ object WebSocketHandler {
         var valid = true
         Timer("WebSocketTimeOutTimer", false).schedule(5000) {
             valid = false
+
             runBlocking {
                 if (!isValidFreshConnection(socket)) {
                     logInfo("Closing Websocket connection because verification timed out")
-                    socket.close(CloseReason(CloseReason.Codes.TRY_AGAIN_LATER, "Verification time timed out"))
+                    socket.close(CloseReason.Codes.CANNOT_ACCEPT, Error.IDENTIFICATION_WINDOW_TIMEOUT)
+                    this.cancel()
                 }
             }
         }
@@ -171,6 +175,10 @@ object WebSocketHandler {
         val action = json.getString("action")
 
         return ActionHandler.handleIncomingActionRequest(getAccordingUserTo(session), action, json)
+    }
+
+    fun connectedWebSockets(): Int {
+        return socketAuthMap.keys.size
     }
 
     private fun getAccordingUserTo(session: DefaultWebSocketSession): UUID {

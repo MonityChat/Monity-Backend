@@ -11,21 +11,21 @@ import de.devin.monity.network.httprouting.*
 import de.devin.monity.network.wsrouting.ActionHandler
 import de.devin.monity.network.wsrouting.WebSocketHandler
 import de.devin.monity.network.wsrouting.WebSocketHandler.send
-import de.devin.monity.util.Status
 import de.devin.monity.util.TypingManager
 import de.devin.monity.util.html.respondHomePage
 import filemanagment.filemanagers.ConfigFileManager
 import filemanagment.util.ConsoleColors
 import filemanagment.util.logInfo
-import io.ktor.application.*
-import io.ktor.features.*
-import io.ktor.gson.*
 import io.ktor.http.*
-import io.ktor.http.content.*
-import io.ktor.routing.*
+import io.ktor.serialization.gson.*
+import io.ktor.server.application.*
+import io.ktor.server.cio.*
 import io.ktor.server.engine.*
-import io.ktor.server.tomcat.*
-import io.ktor.websocket.*
+import io.ktor.server.http.content.*
+import io.ktor.server.plugins.contentnegotiation.*
+import io.ktor.server.plugins.cors.routing.*
+import io.ktor.server.routing.*
+import io.ktor.server.websocket.*
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -33,7 +33,7 @@ import java.io.File
 import java.net.URLDecoder
 
 val bootLocation = LocationGetter().getLocation()
-const val version = "1.3.0"
+const val version = "1.3.3"
 const val name = "Monity"
 
 fun main() {
@@ -55,19 +55,19 @@ object Monity {
         runDatabase()
         ActionHandler.loadDefaultActions()
         TypingManager.loadTimer()
+
     }
 
     private fun runHTTPServer() {
-        val server = embeddedServer(Tomcat, port = config.getHTTPPort(), host = config.getHTTPHost()) {
-            environment.monitor.subscribe(Routing.RoutingCallStarted) {
+        embeddedServer(CIO, port = config.getHTTPPort(), host = config.getHTTPHost()) {
+            this.environment.monitor.subscribe(Routing.RoutingCallStarted) {
                 handlePreRoute(it)
             }
-
             //CORS installation and configuration for internal cross routing
             install(CORS) {
                 anyHost()
-                header(HttpHeaders.ContentType)
-                header(HttpHeaders.Authorization)
+                allowHeader(HttpHeaders.ContentType)
+                allowHeader(HttpHeaders.Authorization)
             }
 
             //Automatized De/Serialization from incoming outgoing HTTP objects
@@ -77,11 +77,14 @@ object Monity {
 
             //Websockets extensions
             install(WebSockets)
+            install(Routing)
+
 
             //websocket routing
             routing {
                 webSocket("/monity") {
                     try {
+                        logInfo("User trying to connect.")
                         WebSocketHandler.handleIncomingRequest(this)
                         while (!WebSocketHandler.isValidConnection(this)) {} //Wait
 
@@ -89,7 +92,7 @@ object Monity {
                         val user = WebSocketHandler.getUserFrom(this)
                         WebSocketHandler.executeLoginActions(user.uuid)
 
-                        for (frame in this.incoming) {
+                        for (frame in incoming) {
                             val returnPacket = WebSocketHandler.handleIncomingContent(frame, this)
                             send(returnPacket)
                         }

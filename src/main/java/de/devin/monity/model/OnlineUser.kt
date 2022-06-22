@@ -1,16 +1,13 @@
 package de.devin.monity.model
 
 import de.devin.monity.network.db.user.DetailedUserDB
-import de.devin.monity.network.db.user.UserProfile
-import de.devin.monity.network.httprouting.UserData
 import de.devin.monity.network.wsrouting.WebSocketHandler
 import de.devin.monity.util.Status
 import de.devin.monity.util.notifications.Notification
 import de.devin.monity.util.notifications.send
-import io.ktor.http.cio.websocket.*
-import kotlinx.coroutines.isActive
+import io.ktor.websocket.*
 import kotlinx.coroutines.runBlocking
-import java.util.UUID
+import java.util.*
 
 class OnlineUser(uuid: UUID, private val socketSession: DefaultWebSocketSession) : User(uuid), MessageSender {
 

@@ -2,12 +2,9 @@ package de.devin.monity.network.db.user
 
 import de.devin.monity.network.db.util.DBManager
 import de.devin.monity.network.httprouting.UserData
-import org.jetbrains.exposed.sql.SchemaUtils
+import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.like
-import org.jetbrains.exposed.sql.Table
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.util.UUID
 
@@ -56,6 +53,15 @@ object UserDB: Table("user"), DBManager<UserData, UUID> {
     fun getByUserOrEmail(input: String): UserData {
         return if (hasUserName(input)) getByName(input)
         else getByEmail(input)
+    }
+
+    fun updatePasswordAndSalt(uuid: UUID, newPassword: String, newSalt: String) {
+        transaction {
+            update({UserDB.uuid eq uuid.toString()}) {
+                it[password] = newPassword
+                it[salt] = newSalt
+            }
+        }
     }
 
     fun getUsersLike(keyWord: String): List<UserData> {

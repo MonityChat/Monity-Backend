@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!-- Set Exposed logger on INFO level  -->
+    <logger name="Exposed" level="trace" additivity="false">
+        <appender-ref ref="STDOUT"/>
+    </logger>
+
+    <!-- Set root logger on another level  -->
+    <root level="trace">
+        <appender-ref ref="STDOUT"/>
+    </root>
+
+</configuration>

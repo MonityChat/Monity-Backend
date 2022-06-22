@@ -4,12 +4,11 @@ import de.devin.monity.network.auth.AuthHandler
 import de.devin.monity.network.auth.AuthLevel
 import filemanagment.util.logError
 import filemanagment.util.logInfo
-import filemanagment.util.logWarning
-import io.ktor.application.*
-import io.ktor.features.*
-import io.ktor.request.*
-import io.ktor.response.*
-import io.ktor.routing.*
+import io.ktor.server.application.*
+import io.ktor.server.plugins.*
+import io.ktor.server.request.*
+import io.ktor.server.response.*
+import io.ktor.server.routing.*
 import java.util.*
 
 
@@ -19,11 +18,8 @@ data class Authorization(val uuid: UUID, val authLevel: AuthLevel)
  * Called before any routing method is called.
  */
 fun handlePreRoute(call: RoutingApplicationCall) {
-    logInfo("Route called: ${call.request.path()} by ${call.request.host()}")
-
-    if (call.request.headers["authorization"] == null) {
-        logWarning("API call without authentication from ${call.request.origin.remoteHost}")
-    }
+    if (!call.request.path().endsWith(".png"))
+        logInfo("Route called: ${call.request.path()} by ${call.request.host()}")
 }
 
 fun Route.AuthRoute() {

@@ -1,8 +1,8 @@
 package de.devin.monity.util.notifications
 
-import io.ktor.http.cio.websocket.*
+import io.ktor.websocket.*
 import org.json.JSONObject
-import java.util.UUID
+import java.util.*
 
 interface Notification {
 

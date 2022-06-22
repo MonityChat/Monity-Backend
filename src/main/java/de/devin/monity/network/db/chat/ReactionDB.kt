@@ -32,11 +32,11 @@ object ReactionDB: Table("message_reactions"), DBManager<ReactionData, String> {
     }
 
     fun hasMessageReaction(messageID: UUID, reaction: String): Boolean  {
-        return transaction { select((ReactionDB.messageID eq messageID.toString()) eq (ReactionDB.reaction eq reaction)).count() > 0  }
+        return transaction { select((ReactionDB.messageID eq messageID.toString()) and (ReactionDB.reaction eq reaction)).count() > 0  }
     }
 
     fun getReactionCount(messageID: UUID, reaction: String): Long  {
-        return transaction { select((ReactionDB.messageID eq messageID.toString()) eq (ReactionDB.reaction eq reaction)).count()  }
+        return transaction { select((ReactionDB.messageID eq messageID.toString() and (ReactionDB.reaction eq reaction))).count()  }
     }
 
     fun addReactionToMessage(messageID: UUID, reaction: String) {

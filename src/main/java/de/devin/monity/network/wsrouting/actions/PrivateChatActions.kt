@@ -207,10 +207,19 @@ class PrivateChatReactMessageAction: Action {
         ReactionDB.addReactionToMessage(messageID, reaction)
 
         val chat = ChatDB.get(MessageDB.get(messageID).chat)
+
         val message = MessageDB.get(messageID)
+
+        val messageJSON = JSONObject()
+        messageJSON.put("message", toJSON(message))
+        messageJSON.getJSONObject("message").put("author", UserDB.get(message.sender).username)
+        if (message.relatedTo != null) {
+            messageJSON.getJSONObject("message").getJSONObject("relatedTo").put("relatedAuthor", UserDB.get(message.relatedTo.sender).username)
+        }
+
         UserHandler.sendNotificationIfOnline( if (chat.initiator == sender) chat.otherUser else chat.initiator, PrivateChatUserReactedToMessageNotification(sender, message, chat.id ))
 
-        return JSONObject().put("message", toJSON(message))
+        return messageJSON
     }
 }
 
