@@ -13,15 +13,10 @@ class OnlineUser(uuid: UUID, private val socketSession: DefaultWebSocketSession)
 
 
     fun sendNotification(notification: Notification) {
-
         runBlocking {
-
             if (WebSocketHandler.isValidConnection(socketSession))
                 socketSession.send(notification)
         }
-
-
-
     }
 
     fun setStatus(status: Status) {

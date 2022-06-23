@@ -177,8 +177,15 @@ object WebSocketHandler {
         return ActionHandler.handleIncomingActionRequest(getAccordingUserTo(session), action, json)
     }
 
-    fun connectedWebSockets(): Int {
-        return socketAuthMap.keys.size
+    /**
+     * This will close the connection to the websocket and execute all log out actions
+     * Also it will end the websocket thread
+     */
+    fun closeConnection(session: DefaultWebSocketSession) {
+        val uuid = getOldUUIDFrom(session) //this is an old session because the connection is already not active anymore
+        logInfo("Closing websocket to User $uuid")
+        closed(session)
+        executeLogoutActions(uuid)
     }
 
     private fun getAccordingUserTo(session: DefaultWebSocketSession): UUID {
@@ -237,6 +244,21 @@ object WebSocketHandler {
      */
     suspend fun WebSocketSession.close(reason: CloseReason.Codes, error: Error) {
         close(CloseReason(reason, toJSONString(error)))
+    }
+
+    /**
+     * Allows to close the connection with a reason and error directly
+     *
+     * Extension function for
+     * @see WebSocketSession
+     *
+     *
+     * @param reason the reason the connection was closed
+     * @param error the error to send
+     * @param errorReason why did the error occur
+     */
+    suspend fun WebSocketSession.close(reason: CloseReason.Codes, error: Error, errorReason: String) {
+        close(CloseReason(reason, toJSON(error).put("reason", errorReason).toString()))
     }
 
     fun isConnected(uuid: UUID): Boolean {

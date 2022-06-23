@@ -142,6 +142,11 @@ enum class Error {
     USER_ALREADY_IN_GROUP,
 
     /**
+     * Occurs when an action creates an unhandled exception
+     */
+    THERE_WAS_AN_UNHANDLED_INTERNAL_EXCEPTION,
+
+    /**
      * Occurs when a user tries to join a group where no request is needed
      */
     GROUP_DOES_NOT_REQUIRE_REQUEST,

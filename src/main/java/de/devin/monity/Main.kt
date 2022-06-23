@@ -10,6 +10,8 @@ import de.devin.monity.network.db.user.UserSettingsDB
 import de.devin.monity.network.httprouting.*
 import de.devin.monity.network.wsrouting.ActionHandler
 import de.devin.monity.network.wsrouting.WebSocketHandler
+import de.devin.monity.network.wsrouting.WebSocketHandler.close
+import de.devin.monity.network.wsrouting.WebSocketHandler.closeConnection
 import de.devin.monity.network.wsrouting.WebSocketHandler.send
 import de.devin.monity.util.TypingManager
 import de.devin.monity.util.html.respondHomePage
@@ -31,6 +33,8 @@ import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.io.File
 import java.net.URLDecoder
+import de.devin.monity.util.Error
+import io.ktor.websocket.*
 
 val bootLocation = LocationGetter().getLocation()
 const val version = "1.3.3"
@@ -95,32 +99,25 @@ object Monity {
                         val user = WebSocketHandler.getUserFrom(this)
                         WebSocketHandler.executeLoginActions(user.uuid)
 
+                        //everytime the user sends something over the websocket
                         for (frame in incoming) {
-                            val returnPacket = WebSocketHandler.handleIncomingContent(frame, this)
-                            send(returnPacket)
+                            try {
+                                val returnPacket = WebSocketHandler.handleIncomingContent(frame, this)
+                                send(returnPacket)
+                            } catch (e: java.lang.Exception) {
+                                //if anything goes wrong while executing the given action, it will return an error to the user and close the connection.
+                                send(Error.THERE_WAS_AN_UNHANDLED_INTERNAL_EXCEPTION)
+                                val message = e.message ?: "Unknown"
+                                this.close(CloseReason.Codes.INTERNAL_ERROR, Error.THERE_WAS_AN_UNHANDLED_INTERNAL_EXCEPTION, message)
+                            }
                         }
                     }catch (e: ClosedReceiveChannelException) {
-                        logInfo("Closed")
-                        val user = WebSocketHandler.getOldUUIDFrom(this)
-                        logInfo("Closing websocket to User $user")
-                        WebSocketHandler.closed(this)
-
-                        WebSocketHandler.executeLogoutActions(user)
+                        closeConnection(this)
                     }catch (e: Throwable) {
-                        logInfo("Closed")
-                        if (!WebSocketHandler.isValidConnection(this)) return@webSocket
-                        val user = WebSocketHandler.getOldUUIDFrom(this)
-                        logInfo("Closing websocket to User $user")
-                        WebSocketHandler.closed(this)
-                        WebSocketHandler.executeLogoutActions(user)
+                        closeConnection(this)
                         e.printStackTrace()
                     } finally {
-                        logInfo("Closed")
-                        val user = WebSocketHandler.getOldUUIDFrom(this)
-                        logInfo("Closing websocket to User $user")
-                        WebSocketHandler.closed(this)
-
-                        WebSocketHandler.executeLogoutActions(user)
+                        closeConnection(this)
                     }
                 }
             }

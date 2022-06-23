@@ -16,6 +16,9 @@ class UserTypingAction: Action {
 
     override fun execute(sender: UUID, request: JSONObject): JSONObject {
         val targetUUID = UUID.fromString(request.getString("target"))
+
+        if (request.getString("chatID").isEmpty()) return Error.INVALID_JSON_FORMAT.toJson()
+
         val chatID = UUID.fromString(request.getString("chatID"))
 
         if (!TypingManager.isTyping(sender, targetUUID, chatID)) {
