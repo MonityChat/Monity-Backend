@@ -12,47 +12,48 @@ import de.devin.monity.util.dataconnectors.UserHandler
 import de.devin.monity.util.notifications.PrivateChatUserReceivedMessagesNotification
 import de.devin.monity.util.notifications.UserWentOfflineNotification
 import de.devin.monity.util.notifications.UserWentOnlineNotification
-import filemanagment.util.logInfo
+import de.devin.monity.util.logInfo
 import io.ktor.websocket.*
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 import org.json.JSONObject
 import java.util.*
-import kotlin.concurrent.schedule
+import java.util.concurrent.ScheduledThreadPoolExecutor
+import java.util.concurrent.TimeUnit
 
+/**
+ * Util class helping to manage incoming websockets and their packages
+ */
 object WebSocketHandler {
 
     private val socketAuthMap = HashMap<UUID, DefaultWebSocketSession>()
+    private val socketValidationExecutor = ScheduledThreadPoolExecutor(12)
+
+
+    fun startValidationService() {
+        socketValidationExecutor.scheduleAtFixedRate(SocketValidationTask, 0, 1000, TimeUnit.MILLISECONDS)
+    }
 
     /**
      * Handles incoming websockets request
      *
-     * This will give the incoming connection a windows of 5 seconds to provide its auth key
+     * This will give the incoming connection a windows of 3 seconds to provide its auth key
      * @see AuthHandler
      * If the key is not provided the connection will be closed.
      * To be accepted the Key has to be at least LEVEL.USER otherwise the connection will be closed
      *
-     * This function should be called from an asynchronous function because it will use blocking threads
+     * This function does not work in a normal way. It will set the connection to valid or invalid latest at 3 seconds.
+     * If the connection is valid before it will already set the connection to valid and allow for further executions.
+     * But if the connection is not valid this method can take up to 3 seconds. It will execute the 3 seconds timer
+     * asynchronously
+     * The thread will automatically cancel itself after completion.
      *
      * @param socket the incoming socket
      */
     suspend fun handleIncomingRequest(socket: DefaultWebSocketSession) {
-        logInfo("Handling incoming websocket")
         var valid = true
-        Timer("WebSocketTimeOutTimer", false).schedule(5000) {
-            valid = false
+        SocketValidationTask.addWaitingConnection(socket) { valid = false }
 
-            runBlocking {
-                if (!isValidFreshConnection(socket)) {
-                    logInfo("Closing Websocket connection because verification timed out")
-                    socket.close(CloseReason.Codes.CANNOT_ACCEPT, Error.IDENTIFICATION_WINDOW_TIMEOUT)
-                    this.cancel()
-                }
-            }
-        }
-
-        for (frame in socket.incoming) {
+        for (frame in socket.incoming) { //everything the client sends in this 3-second window will be handled here
             if (!valid && socketAuthMap.containsValue(socket)) {
                 socket.close(CloseReason.Codes.CANNOT_ACCEPT, Error.IDENTIFICATION_WINDOW_TIMEOUT)
                 return
@@ -64,33 +65,34 @@ object WebSocketHandler {
 
                     val reader = SimpleJSONReader(text)
                     if (!reader.valid) {
-                        socket.send(Error.INVALID_JSON_FORMAT)
+                        socket.sendAndClose(Error.INVALID_JSON_FORMAT)
                         return
                     }
 
-                    if (!reader.json.has("auth")) return socket.send(Error.INVALID_JSON_FORMAT)
-                    if (!reader.json.has("user")) return socket.send(Error.INVALID_JSON_FORMAT)
+                    if (!reader.json.has("auth")) return socket.sendAndClose(Error.INVALID_JSON_FORMAT)
+                    if (!reader.json.has("user")) return socket.sendAndClose(Error.INVALID_JSON_FORMAT)
 
                     val authKey = reader.json.getString("auth")
                     val userName = reader.json.getString("user")
 
-                    if (!validUUID(authKey)) return socket.send(Error.INVALID_UUID_FORMAT)
-                    if (!UserDB.hasEmailOrUser(userName)) return socket.send(Error.USER_NOT_FOUND)
+                    if (!validUUID(authKey)) return socket.sendAndClose(Error.INVALID_UUID_FORMAT)
+                    if (!UserDB.hasEmailOrUser(userName)) return socket.sendAndClose(Error.USER_NOT_FOUND)
 
                     val auth = UUID.fromString(authKey)
 
                     if (!AuthHandler.isAuthenticated(auth)) {
-                        return socket.send(Error.UNAUTHORIZED)
+                        return socket.sendAndClose(Error.UNAUTHORIZED)
                     }
 
                     if (AuthHandler.getLevel(auth).weight < AuthLevel.AUTH_LEVEL_USER.weight)
-                        return socket.send(Error.UNAUTHORIZED)
+                        return socket.sendAndClose(Error.UNAUTHORIZED)
 
                     val user = UserDB.getByUserOrEmail(userName)
 
                     logInfo("Allowing connection to pass from $userName")
                     socketAuthMap[user.uuid] = socket
-                    valid = true
+
+                    executeLoginActions(user.uuid)
 
                     return socket.send(Error.NONE)
                 }
@@ -193,14 +195,15 @@ object WebSocketHandler {
         return socketAuthMap.keys.first { socketAuthMap[it] == session }
     }
 
-    fun closed(session: DefaultWebSocketSession) {
+    private fun closed(session: DefaultWebSocketSession) {
         val user = getAccordingUserTo(session)
         socketAuthMap.remove(user)
     }
 
-    fun getOldUUIDFrom(session: DefaultWebSocketSession): UUID {
+    private fun getOldUUIDFrom(session: DefaultWebSocketSession): UUID {
         return socketAuthMap.keys.first { socketAuthMap[it] == session }
     }
+
     fun getUserFrom(session: DefaultWebSocketSession): OnlineUser {
         return UserHandler.getOnlineUser(getAccordingUserTo(session))
     }
@@ -232,6 +235,22 @@ object WebSocketHandler {
         send(error.toJson())
     }
 
+
+    /**
+     * Allows to send direct Error Objects to the socket and close the connection afterwards
+     *
+     * Extension function for
+     * @see WebSocketSession
+     *
+     *
+     * @param error the error to send
+     */
+    suspend fun WebSocketSession.sendAndClose(error: Error) {
+        send(error.toJson())
+        close(CloseReason.Codes.PROTOCOL_ERROR, error)
+    }
+
+
     /**
      * Allows to close the connection with a reason and error directly
      *
@@ -258,21 +277,34 @@ object WebSocketHandler {
      * @param errorReason why did the error occur
      */
     suspend fun WebSocketSession.close(reason: CloseReason.Codes, error: Error, errorReason: String) {
-        close(CloseReason(reason, toJSON(error).put("reason", errorReason).toString()))
+        close(CloseReason(reason, error.toJson().put("reason", errorReason).toString()))
     }
 
+
+    /**
+     * Whether the user is connected or not
+     * @return true if connected false otherwise
+     */
     fun isConnected(uuid: UUID): Boolean {
         return socketAuthMap.containsKey(uuid)
     }
 
+    /**
+     * Gets the connection from the UUID
+     * @warning this can cause a NPE if there is no valid connection. Use
+     * @see WebSocketHandler.isConnected before using this function
+     * @return the DefaultWebSocketSession for the user
+     */
     fun getConnection(uuid: UUID): DefaultWebSocketSession {
         return socketAuthMap[uuid]!!
     }
+
+    /**
+     * Checks if the connection is still valid
+     * This means if it still connection and if its active
+     * @return true if valid false otherwsie
+     */
     fun isValidConnection(session: DefaultWebSocketSession): Boolean {
         return socketAuthMap.containsValue(session) && session.isActive
-    }
-
-    private fun isValidFreshConnection(session: DefaultWebSocketSession): Boolean {
-        return socketAuthMap.containsValue(session)
     }
 }

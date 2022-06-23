@@ -5,7 +5,7 @@ import de.devin.monity.network.auth.AuthHandler
 import de.devin.monity.network.db.user.*
 import de.devin.monity.util.Error
 import de.devin.monity.util.htmlEmail
-import filemanagment.util.logInfo
+import de.devin.monity.util.logInfo
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.request.*

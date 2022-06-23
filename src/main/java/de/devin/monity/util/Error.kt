@@ -192,6 +192,9 @@ enum class Error {
     INVALID_FRIEND_ACCEPT_REQUEST;
 
 
+    /**
+     * Converts the error into a json string
+     */
     fun toJson(): JSONObject {
         return JSONObject("{\"error\":\"$this\"}")
     }

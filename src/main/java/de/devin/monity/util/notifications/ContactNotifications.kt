@@ -5,6 +5,10 @@ import de.devin.monity.util.toJSON
 import org.json.JSONObject
 import java.util.*
 
+/**
+ * Occurs when a friendsrequest is incoming
+ * @param user the who sent the request
+ */
 class ContactAddRequestNotification(val user: UserProfile): Notification {
 
     override val from: UUID = user.uuid
@@ -21,6 +25,10 @@ class ContactAddRequestNotification(val user: UserProfile): Notification {
     }
 }
 
+/**
+ * Occurs when a friendsrequest was accepted
+ * @param user the user who accepted the friendrequest
+ */
 class ContactAddNotification(val user: UserProfile): Notification {
 
     override val from: UUID = user.uuid

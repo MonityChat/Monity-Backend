@@ -10,7 +10,7 @@ import de.devin.monity.util.FileManager
 import de.devin.monity.util.dataconnectors.UserHandler
 import de.devin.monity.util.notifications.UserUpdatesProfileNotification
 import de.devin.monity.util.validUUID
-import filemanagment.util.logInfo
+import de.devin.monity.util.logInfo
 import io.ktor.http.*
 import io.ktor.http.content.*
 import io.ktor.server.application.*

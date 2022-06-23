@@ -4,15 +4,28 @@ import de.devin.monity.network.db.user.UserDB
 import de.devin.monity.network.wsrouting.actions.*
 import de.devin.monity.util.Error
 import de.devin.monity.util.validUUID
-import filemanagment.util.logInfo
+import de.devin.monity.util.ConsoleColors
+import de.devin.monity.util.logInfo
 import org.json.JSONObject
 import java.util.*
 import kotlin.collections.ArrayList
 
+
+/**
+ * This util class will handle any existing action and incoming request.
+ * The main purpose is to handle incoming request, search the correct action and then execute the action.
+ *
+ * @see ActionHandler.handleIncomingActionRequest
+ *
+ */
 object ActionHandler {
 
     private val registeredActionHandlers = ArrayList<Action>()
 
+
+    /**
+     * loads all default actions and registers them
+     */
     fun loadDefaultActions() {
         //Contact Actions
         registerAction(ContactSearchAction())
@@ -65,15 +78,23 @@ object ActionHandler {
         registeredActionHandlers += action
     }
 
-    fun removeAction(action: Action) {
-        registeredActionHandlers -= action
-    }
-
+    /**
+     * Handles the incoming content and matches, if existing, an action to it
+     *
+     * Because every action consists of parameters, it will check if the request contains every parameter, if not an error will be returned.
+     * After finding the correct action it will execute it and afterwards return the actions return to the sender.
+     * @see Action
+     *
+     * @param sender the sender of the action
+     * @param actionRequest the action
+     * @param request the request body
+     * @return either error or the return of the executed action
+     */
     fun handleIncomingActionRequest(sender: UUID, actionRequest: String, request: JSONObject): JSONObject {
         if (!UserDB.has(sender))
             return Error.USER_NOT_FOUND.toJson()
 
-        logInfo("Action: $actionRequest")
+        logInfo("Action ${ConsoleColors.RED_BRIGHT}$actionRequest call ${ConsoleColors.RESET}by ${ConsoleColors.GREEN_BRIGHT}${UserDB.get(sender).username}")
 
         for (action in registeredActionHandlers) {
             if (action.name == actionRequest) {

@@ -7,17 +7,22 @@ import de.devin.monity.network.db.user.DetailedUserDB
 import de.devin.monity.network.db.user.UserContactDB
 import de.devin.monity.network.db.user.UserDB
 import de.devin.monity.network.db.user.UserSettingsDB
-import de.devin.monity.network.httprouting.*
+import de.devin.monity.network.httprouting.AuthRoute
+import de.devin.monity.network.httprouting.UploadImage
+import de.devin.monity.network.httprouting.UserRoute
+import de.devin.monity.network.httprouting.handlePreRoute
 import de.devin.monity.network.wsrouting.ActionHandler
 import de.devin.monity.network.wsrouting.WebSocketHandler
 import de.devin.monity.network.wsrouting.WebSocketHandler.close
 import de.devin.monity.network.wsrouting.WebSocketHandler.closeConnection
 import de.devin.monity.network.wsrouting.WebSocketHandler.send
+import de.devin.monity.network.wsrouting.WebSocketHandler.sendAndClose
+import de.devin.monity.util.ConsoleColors
+import de.devin.monity.util.Error
 import de.devin.monity.util.TypingManager
 import de.devin.monity.util.html.respondHomePage
 import filemanagment.filemanagers.ConfigFileManager
-import filemanagment.util.ConsoleColors
-import filemanagment.util.logInfo
+import de.devin.monity.util.logInfo
 import io.ktor.http.*
 import io.ktor.serialization.gson.*
 import io.ktor.server.application.*
@@ -28,13 +33,12 @@ import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.plugins.cors.routing.*
 import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
+import io.ktor.websocket.*
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.io.File
 import java.net.URLDecoder
-import de.devin.monity.util.Error
-import io.ktor.websocket.*
 
 val bootLocation = LocationGetter().getLocation()
 const val version = "1.3.3"
@@ -44,71 +48,92 @@ fun main() {
     Monity.boot()
 }
 
+/**
+ * Monity main class, loading its boot function will execute all required methods to start the monity backend
+ */
 object Monity {
 
     private val config = ConfigFileManager
     private lateinit var db: Database
-    val dataFolder = File(LocationGetter().getLocation().absolutePath + "/../data")
+    private val dataFolder = File(LocationGetter().getLocation().absolutePath + "/../data")
+
+    /**
+     * Will launch all required services
+     * These contain:
+     *
+     * - HTTP Server
+     * - WebSocket Server
+     * - Database
+     * - Validation Service
+     * - ActionHandler
+     * - TypingManager
+     */
     fun boot() {
         logInfo("Data: ${dataFolder.absolutePath}")
         logInfo("Launching $name ${ConsoleColors.GREEN}v.$version")
         logInfo("Launching HTTP Server on port ${ConsoleColors.YELLOW}${config.getHTTPPort()}")
+
+        WebSocketHandler.startValidationService()
         runHTTPServer()
+
         logInfo("Server running on port ${ConsoleColors.YELLOW}${config.getHTTPPort()}")
         logInfo("Connecting to Database ${ConsoleColors.YELLOW}${config.getSQLHost()}:${config.getSQLPort()}/${config.getSQLDatabase()}")
+
         runDatabase()
         ActionHandler.loadDefaultActions()
         TypingManager.loadTimer()
-
     }
 
+    /**
+     * Will launch HTTP Server which can answer to HTTP request on the given port and URL.
+     * Will also be able to listen to WebSockets and handle their request.
+     * @see WebSocketHandler
+     */
     private fun runHTTPServer() {
         embeddedServer(CIO, port = config.getHTTPPort(), host = config.getHTTPHost()) {
             this.environment.monitor.subscribe(Routing.RoutingCallStarted) {
                 handlePreRoute(it)
             }
-            //CORS installation and configuration for internal cross routing
+
             install(CORS) {
                 anyHost()
                 allowHeader(HttpHeaders.ContentType)
                 allowHeader(HttpHeaders.Authorization)
             }
 
-            //Automatized De/Serialization from incoming outgoing HTTP objects
             install(ContentNegotiation) {
                 gson()
             }
 
-            //Websockets extensions
             install(WebSockets) {
                 pingPeriodMillis = 5000
                 timeoutMillis = 10000
             }
+
             install(Routing)
 
-
-            //websocket routing
             routing {
                 webSocket("/monity") {
                     try {
-                        logInfo("User trying to connect.")
                         WebSocketHandler.handleIncomingRequest(this)
-                        while (!WebSocketHandler.isValidConnection(this)) {} //Wait
-
-                        //User successfully connected
-                        val user = WebSocketHandler.getUserFrom(this)
-                        WebSocketHandler.executeLoginActions(user.uuid)
 
                         //everytime the user sends something over the websocket
                         for (frame in incoming) {
-                            try {
-                                val returnPacket = WebSocketHandler.handleIncomingContent(frame, this)
-                                send(returnPacket)
-                            } catch (e: java.lang.Exception) {
-                                //if anything goes wrong while executing the given action, it will return an error to the user and close the connection.
-                                send(Error.THERE_WAS_AN_UNHANDLED_INTERNAL_EXCEPTION)
-                                val message = e.message ?: "Unknown"
-                                this.close(CloseReason.Codes.INTERNAL_ERROR, Error.THERE_WAS_AN_UNHANDLED_INTERNAL_EXCEPTION, message)
+                            if (!WebSocketHandler.isValidConnection(this)) {
+                                sendAndClose(Error.UNAUTHORIZED)
+                                return@webSocket
+                            } else {
+                                try {
+                                    val returnPacket = WebSocketHandler.handleIncomingContent(frame, this)
+                                    logInfo(returnPacket.toString())
+                                    send(returnPacket)
+                                } catch (e: java.lang.Exception) {
+                                    //if anything goes wrong while executing the given action, it will return an error to the user and close the connection.
+                                    e.printStackTrace()
+                                    send(Error.THERE_WAS_AN_UNHANDLED_INTERNAL_EXCEPTION)
+                                    val message = e.message ?: "Unknown"
+                                    this.close(CloseReason.Codes.INTERNAL_ERROR, Error.THERE_WAS_AN_UNHANDLED_INTERNAL_EXCEPTION, message)
+                                }
                             }
                         }
                     }catch (e: ClosedReceiveChannelException) {
@@ -133,12 +158,14 @@ object Monity {
                 }
                 AuthRoute()
                 UserRoute()
-                UtilRoute()
                 UploadImage()
             }
         }.start(wait = false)
     }
 
+    /**
+     * Will connect to the database and load all tables
+     */
     private fun runDatabase() {
         val hikariConfig = HikariConfig().apply {
             username = config.getSQLUser()

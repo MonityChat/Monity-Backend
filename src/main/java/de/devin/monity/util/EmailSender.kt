@@ -2,13 +2,14 @@ package de.devin.monity.util
 
 import filemanagment.filemanagers.ConfigFileManager
 import org.apache.commons.mail.DefaultAuthenticator
-import org.apache.commons.mail.Email
 import org.apache.commons.mail.HtmlEmail
-import org.apache.commons.mail.SimpleEmail
-import java.io.File
 
 
- fun htmlEmail(): HtmlEmail {
+/**
+ * Builder to build a default HTML Email with the settings in the config
+ * @return HTML Email ready to be sent
+ */
+fun htmlEmail(): HtmlEmail {
     val email = HtmlEmail()
     email.hostName = ConfigFileManager.getEmailHostName()
     email.setSmtpPort(ConfigFileManager.getEmailSMTPPort())

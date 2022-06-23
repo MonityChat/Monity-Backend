@@ -2,8 +2,9 @@ package de.devin.monity.network.httprouting
 
 import de.devin.monity.network.auth.AuthHandler
 import de.devin.monity.network.auth.AuthLevel
-import filemanagment.util.logError
-import filemanagment.util.logInfo
+import de.devin.monity.util.ConsoleColors
+import de.devin.monity.util.logError
+import de.devin.monity.util.logInfo
 import io.ktor.server.application.*
 import io.ktor.server.plugins.*
 import io.ktor.server.request.*
@@ -19,7 +20,7 @@ data class Authorization(val uuid: UUID, val authLevel: AuthLevel)
  */
 fun handlePreRoute(call: RoutingApplicationCall) {
     if (!call.request.path().endsWith(".png"))
-        logInfo("Route called: ${call.request.path()} by ${call.request.host()}")
+        logInfo("Route called: ${ConsoleColors.PURPLE}${call.request.path()} ${ConsoleColors.RESET}by ${ConsoleColors.GREEN}${call.request.host()}")
 }
 
 fun Route.AuthRoute() {

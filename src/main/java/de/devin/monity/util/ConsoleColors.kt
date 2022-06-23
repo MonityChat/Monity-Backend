@@ -1,5 +1,12 @@
-package filemanagment.util
+package de.devin.monity.util
 
+
+/**
+ * ConsoleColors can be concatenated with any string and when printed in console will add the given color after the consolecolor
+ * for example
+ *
+ * ${ConsoleColors.RED} will color anything in red which is behind it
+ */
 object ConsoleColors {
     // Reset
     const val RESET = "\u001b[0m" // Text Reset

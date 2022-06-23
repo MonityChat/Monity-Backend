@@ -5,6 +5,12 @@ import de.devin.monity.util.toJSON
 import org.json.JSONObject
 import java.util.*
 
+
+/**
+ * Occurs when the user stopped typing
+ * @param typer the user who stopped
+ * @param chatID in which chat he stopped
+ */
 class UserStoppedTypingNotification(val typer: UUID, val chatID: UUID): Notification {
 
     override val from: UUID
@@ -23,6 +29,11 @@ class UserStoppedTypingNotification(val typer: UUID, val chatID: UUID): Notifica
     }
 }
 
+/**
+ * Occurs when a user started typing
+ * @param typer the user who started typing
+ * @param chatID in which chat he started
+ */
 class UserStartedTypingNotification(val typer: UUID, val chatID: UUID): Notification {
 
     override val from: UUID
@@ -41,6 +52,10 @@ class UserStartedTypingNotification(val typer: UUID, val chatID: UUID): Notifica
     }
 }
 
+/**
+ * Occurs when a user went online
+ * @param user the user who is now online
+ */
 class UserWentOnlineNotification(val user: UUID): Notification {
 
     override val from: UUID
@@ -70,6 +85,11 @@ class UserWentOnlineNotification(val user: UUID): Notification {
     }
 }
 
+
+/**
+ * Occurs when a user went offline
+ * @param user the user who went offline
+ */
 class UserWentOfflineNotification(val user: UUID): Notification {
 
     override val from: UUID
@@ -99,6 +119,11 @@ class UserWentOfflineNotification(val user: UUID): Notification {
     }
 }
 
+
+/**
+ * Occurs when a user updated his profile
+ * @param updater the user who updated his profile
+ */
 class UserUpdatesProfileNotification(val updater: UUID): Notification {
 
     override val from: UUID

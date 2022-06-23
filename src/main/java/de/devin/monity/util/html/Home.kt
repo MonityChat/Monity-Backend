@@ -7,6 +7,10 @@ import io.ktor.server.application.*
 import io.ktor.server.html.*
 
 
+/**
+ * Sends the homepage of monity backend to the given call
+ * @param call the localhost/8808 call
+ */
 suspend fun respondHomePage(call: ApplicationCall) {
     call.respondHtml {
         head {

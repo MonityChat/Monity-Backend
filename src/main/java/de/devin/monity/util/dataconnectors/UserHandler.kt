@@ -19,15 +19,29 @@ import java.util.UUID
  */
 object UserHandler {
 
+    /**
+     * Whether a user exists or not
+     * @return true if exists false otherwise
+     */
     fun exists(uuid: UUID): Boolean {
         return UserDB.has(uuid)
     }
 
+    /**
+     * Checks if a user is currently connected
+     * @param uuid of the user
+     * @return true if connected false otherwise
+     */
     fun isOnline(uuid: UUID): Boolean {
         return WebSocketHandler.isConnected(uuid)
     }
 
 
+    /**
+     * Gets the online user if online
+     * @param uuid of the user
+     * @return OnlineUSer if online
+     */
     fun getOnlineUser(uuid: UUID): OnlineUser {
         if (!exists(uuid)) error("UUID not found")
         if (!isOnline(uuid)) error("UUID is not online")
@@ -37,11 +51,22 @@ object UserHandler {
         return OnlineUser(uuid, socket)
     }
 
+    /**
+     * Sends the given notification to the user if the user is online
+     * If the user is not online nothing will happeen
+     * @param target uuid of the user to send the notification to
+     * @param notification the notifcation to send
+     */
     fun sendNotificationIfOnline(target: UUID, notification: Notification) {
         if (!isOnline(target)) return
         getOnlineUser(target).sendNotification(notification)
     }
 
+    /**
+     * Gets the offline user
+     * @param uuid of the offline user
+     * @return User
+     */
     fun getOfflineUser(uuid: UUID): User {
         return User(uuid)
     }

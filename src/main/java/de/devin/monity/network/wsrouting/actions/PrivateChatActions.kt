@@ -10,7 +10,6 @@ import de.devin.monity.util.TypingManager
 import de.devin.monity.util.dataconnectors.UserHandler
 import de.devin.monity.util.notifications.*
 import de.devin.monity.util.toJSON
-import filemanagment.util.logInfo
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
@@ -218,7 +217,7 @@ class PrivateChatReactMessageAction: Action {
             messageJSON.getJSONObject("message").getJSONObject("relatedTo").put("relatedAuthor", UserDB.get(message.relatedTo.sender).username)
         }
 
-        UserHandler.sendNotificationIfOnline( if (chat.initiator == sender) chat.otherUser else chat.initiator, PrivateChatUserReactedToMessageNotification(sender, messageJSON, chat.id ))
+        UserHandler.sendNotificationIfOnline( if (chat.initiator == sender) chat.otherUser else chat.initiator, PrivateChatUserReactedToMessageNotification(sender, messageJSON))
 
         return messageJSON
     }
@@ -258,7 +257,7 @@ class PrivateChatEditMessageAction: Action {
             messageJSON.getJSONObject("message").getJSONObject("relatedTo").put("relatedAuthor", UserDB.get(editMessage.relatedTo.sender).username)
         }
 
-        UserHandler.sendNotificationIfOnline(otherUser, PrivateChatMessageEditNotification(sender, chatID, messageJSON))
+        UserHandler.sendNotificationIfOnline(otherUser, PrivateChatMessageEditNotification(sender, messageJSON))
 
         return messageJSON
     }
