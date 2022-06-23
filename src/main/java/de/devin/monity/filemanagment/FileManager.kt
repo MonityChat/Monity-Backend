@@ -1,18 +1,25 @@
-package filemanagment
+package de.devin.monity.filemanagment
 
 import de.devin.monity.bootLocation
 import org.simpleyaml.configuration.file.YamlFile
 import java.io.File
 import java.nio.file.Files
 
-abstract class FileManager(val fileName: String, val resourceLocation: String, val initLocation: File = File("$bootLocation/$fileName")) {
+
+/**
+ * Util class to load files and read their content
+ * Can also copy content from an internal resource to the given path
+ * @param fileName name of file
+ * @param resourceLocation location of the internal resource
+ * @param initLocation where the file will be located
+ */
+abstract class FileManager(private val fileName: String, private val resourceLocation: String, private val initLocation: File = File("$bootLocation/$fileName")) {
 
     lateinit var configuration: YamlFile
 
     init {
         load()
     }
-
     private fun load() {
         if (!initLocation.exists()) {
             initLocation.parentFile.mkdirs()

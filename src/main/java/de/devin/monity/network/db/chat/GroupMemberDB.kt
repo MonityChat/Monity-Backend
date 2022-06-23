@@ -7,6 +7,10 @@ import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.util.UUID
 
+/**
+ * Contains all data around
+ * @see GroupMemberData
+ */
 object GroupMemberDB: Table("group_members"), DBManager<List<GroupMemberData>, UUID> {
 
     private val groupID = varchar("groupmember_groupid", 36)
@@ -25,18 +29,34 @@ object GroupMemberDB: Table("group_members"), DBManager<List<GroupMemberData>, U
         return transaction { select { groupID eq id.toString() }.map { GroupMemberData(UUID.fromString(it[userID]), id, GroupRole.valueOf(it[role])) } }
     }
 
+    /**
+     * Returns a list of groups where a user is included
+     * @param user the user
+     * @return list of all groupsid where the user is included
+     */
     fun getGroupsWhereUserIsIncluded(user: UUID): List<UUID> {
         return transaction { select { userID eq user.toString() }.map { UUID.fromString(it[groupID]) } }
     }
 
+    /**
+     * Checks if the user is in the given group
+     * @param user the user
+     * @param group the group
+     * @return whether the user is in the group or not
+     */
     fun isInGroup(user: UUID, group: UUID): Boolean {
         return transaction { select((groupID eq group.toString()) and (userID eq user.toString())).count() > 0 }
     }
-    fun getGroupMemberFor(chatID: UUID, user: UUID): GroupMemberData {
-        return get(chatID).first { it.id == user }
+
+    /**
+     * Returns the group for a given member
+     * @param group the group
+     * @param user the user
+     * @return groupmemberdata for the given group
+     */
+    fun getGroupMemberFor(group: UUID, user: UUID): GroupMemberData {
+        return get(group).first { it.id == user }
     }
-
-
 
     override fun insert(obj: List<GroupMemberData>) {
         transaction {

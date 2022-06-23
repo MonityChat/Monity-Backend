@@ -1,5 +1,6 @@
 package de.devin.monity.network.db.chat
 
+import de.devin.monity.network.db.user.UserProfile
 import de.devin.monity.network.db.util.DBManager
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.exposed.sql.*
@@ -8,8 +9,20 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import java.util.UUID
 
 
+/**
+ * Reactions are stored to every message.
+ * A message can hold infinite reactions of every unicode emoji. Everyone who can see the message can also react to it
+ *
+ * @param messageID the id of the message where the reactions are linked to
+ * @param reaction unicode character of the reaction
+ * @param count how many reactions
+ */
 data class ReactionData(val messageID: UUID, val reaction: String, val count: Long)
 
+/**
+ * Contains all data around
+ * @see ReactionData
+ */
 object ReactionDB: Table("message_reactions"), DBManager<ReactionData, String> {
     private val reaction = varchar("reaction_reaction", 10)
     private val count = long("count")

@@ -36,6 +36,11 @@ object ChatDB: Table("chats"), DBManager<ChatData, UUID> {
         return transaction { select(chatID eq id.toString()).count() > 0 }
     }
 
+    /**
+     * return a all chats for the given user
+     * @param user the user
+     * @return list of all chats
+     */
     fun getChatsFor(user: UUID): List<ChatData> {
         return transaction { select((initiator eq user.toString()) or (otherUser eq user.toString())).map { get(UUID.fromString(it[chatID])) } }
     }
@@ -51,20 +56,42 @@ object ChatDB: Table("chats"), DBManager<ChatData, UUID> {
         }
     }
 
+    /**
+     * Whether 2 users have a private chat or not
+     * @param user1
+     * @param user2
+     * @return whether given 2 users have a private chat or not
+     */
     fun hasPrivateChat(user1: UUID, user2: UUID): Boolean {
         return getChatsFor(user1).any { it.initiator == user2 || it.otherUser == user2 }
     }
 
+    /**
+     * generates a new unused id for a chat
+     * @return new unused ID
+     */
     fun newID(): UUID {
         var uuid = UUID.randomUUID()
         while (has(uuid) || GroupDB.has(uuid)) uuid = UUID.randomUUID()
         return uuid
     }
 
+    /**
+     * Returns a private chat between 2 users
+     * @param user1
+     * @param user2
+     * @return the ChatData
+     */
     fun getPrivateChatBetween(user1: UUID, user2: UUID): ChatData {
         return transaction { select(((initiator eq user2.toString()) and (otherUser eq user1.toString()) ) or ((initiator eq user1.toString() and (otherUser eq user2.toString())))).map { get(UUID.fromString(it[chatID])) }[0] }
     }
 
+    /**
+     * Checks if the user is in the given chat
+     * @param user the user
+     * @param chat the id of the chat
+     * @return whether the user is in the chat or not
+     */
     fun isInChat(user: UUID, chat: UUID): Boolean {
         return get(chat).initiator == user || get(chat).otherUser == user
     }

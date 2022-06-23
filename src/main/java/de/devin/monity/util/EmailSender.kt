@@ -1,6 +1,6 @@
 package de.devin.monity.util
 
-import filemanagment.filemanagers.ConfigFileManager
+import de.devin.monity.filemanagment.filemanagers.ConfigFileManager
 import org.apache.commons.mail.DefaultAuthenticator
 import org.apache.commons.mail.HtmlEmail
 

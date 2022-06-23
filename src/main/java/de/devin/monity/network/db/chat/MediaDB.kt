@@ -1,5 +1,6 @@
 package de.devin.monity.network.db.chat
 
+import de.devin.monity.network.db.user.UserProfile
 import de.devin.monity.network.db.util.DBManager
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
@@ -16,10 +17,16 @@ import java.util.UUID
  * @param filePath leads to where the media is saved on the drive
  */
 data class MediaData(val id: UUID, val filePath: String)
+
+
+/**
+ * Contains all data around
+ * @see MediaData
+ */
 object MediaDB: Table("media"), DBManager<List<MediaData>, UUID> {
 
-    val embedID = varchar("media_message_embedID", 36)
-    val filePath = varchar("media_file_path",512)
+    private val embedID = varchar("media_message_embedID", 36)
+    private val filePath = varchar("media_file_path",512)
 
     override fun load() {
         SchemaUtils.createMissingTablesAndColumns(this)
@@ -33,9 +40,18 @@ object MediaDB: Table("media"), DBManager<List<MediaData>, UUID> {
         return transaction { select(embedID eq id.toString()).map { MediaData(id, it[filePath]) } }
     }
 
+    /**
+     * Deletes the embed if it exists
+     * @param embedID the embed
+     */
     fun deleteIfExists(embedID: UUID) {
         transaction { deleteWhere { MediaDB.embedID eq embedID.toString() } }
     }
+
+    /**
+     * inserts a single embed
+     * @param item the embed to insert
+     */
     fun insertSingle(item: MediaData) {
         transaction {
             insert {

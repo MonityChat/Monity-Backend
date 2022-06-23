@@ -11,7 +11,19 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import java.util.UUID
 
 
+/**
+ * Group settings model the settings of a group which an administrator can set
+ * @see GroupRole
+ * @param groupID the id of the group
+ * @param opened if the group is opened or not. If its closed it can not be found through the search
+ */
 data class GroupSettings(val groupID: UUID, val opened: Boolean, val inviteOnly: Boolean, val requiresRequest: Boolean, val rolesOnly: Boolean, val whoCanInvite: GroupRole)
+
+
+/**
+ * Contains all data around
+ * @see GroupSettings
+ */
 object GroupSettingDB: Table("groupsettings"), DBManager<GroupSettings, UUID> {
 
     private val opened = bool("group_setting_opened")

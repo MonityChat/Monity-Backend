@@ -8,8 +8,24 @@ import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.util.*
 
-
+/**
+ * Group profile describes a profile of group similar to a UserProfile
+ * @param id of the group
+ * @param title of the group
+ * @param description of the group
+ * @param shortStatus of the group
+ * @param image location of the group image
+ * @param r color r
+ * @param g color g
+ * @param b color b
+ */
 data class GroupProfile(val id: UUID, val title: String, val description: String, val shortStatus: String, val image: String, val r: Byte, val b: Byte, val g: Byte)
+
+
+/**
+ * Contains all data around
+ * @see GroupProfile
+ */
 object GroupProfileDB: Table("group_profiles"), DBManager<GroupProfile, UUID> {
 
     private val groupID = varchar("group_profile_id", 36)

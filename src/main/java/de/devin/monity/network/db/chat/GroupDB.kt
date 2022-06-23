@@ -10,30 +10,29 @@ import java.util.UUID
 
 /**
  * A group chat is similar to a normal chat. Instead of consisting of 2 users, it has an unlimited amount of users,
- * which can either join the chat if open or be invited to it.
+ * which can either request to join the chat if its open or be invited to it.
  *
  * GroupChats can either be open or closed. An open group chat can be found by anyone in the monity network and allows everybody to request to join.
  * A closed group chat is only visible to members who are in the groupchat. New members can only join if invited.
  *
  * @param initiator the creator of the groupchat
  * @param members a list of every member in the group chat
- * @param id the unique id of the groupchat
+ * @param groupID the unique id of the groupchat
  * @param started the timestamp the groupchat was created
  * @param groupProfile a profile where all displayed information are stored
  */
 data class GroupChatData(val initiator: UUID,
                          val members: List<GroupMemberData>,
                          val messages: List<MessageData>,
-                         val id: UUID,
+                         val groupID: UUID,
                          val started: Long,
                          val groupSettings: GroupSettings,
                          val groupInvites: List<GroupInvite>,
                          val groupProfile: GroupProfile,)
 
-
 /**
  * A group member is a user which is in the group with the given id
- * Every user has a role which allows them to do different actions inside of the group
+ * Every user has a role which allows them to do different actions inside the group
  * @see GroupRole
  *
  * @param id the user id
@@ -41,6 +40,11 @@ data class GroupChatData(val initiator: UUID,
  * @param role role of the user
  */
 data class GroupMemberData(val id: UUID, val groupID: UUID, val role: GroupRole)
+
+/**
+ * Contains all data around
+ * @see GroupChatData
+ */
 object GroupDB: Table("groups"), DBManager<GroupChatData, UUID> {
 
     private val initiatorID = varchar("group_initiator_uuid", 36)
@@ -73,12 +77,21 @@ object GroupDB: Table("groups"), DBManager<GroupChatData, UUID> {
         }
     }
 
+    /**
+     * Generates a new unused group id
+     * @return the generated ID
+     */
     fun newUUID(): UUID {
         var uuid = UUID.randomUUID()
         while (has(uuid)) uuid = UUID.randomUUID()
         return uuid
     }
 
+    /**
+     * Returns a set of group chat data where the user is included
+     * @param user the user
+     * @return a set of group chat data where the user is included
+     */
     fun getGroupsWhereUserIsIncluded(user: UUID): Set<GroupChatData> {
         return  (transaction { select (initiatorID eq user.toString()).map {
             get(UUID.fromString(it[groupID])) }
@@ -87,7 +100,7 @@ object GroupDB: Table("groups"), DBManager<GroupChatData, UUID> {
     override fun insert(obj: GroupChatData) {
         transaction {
             insert {
-                it[groupID] = obj.id.toString()
+                it[groupID] = obj.groupID.toString()
                 it[initiatorID] = obj.initiator.toString()
                 it[started] = obj.started
             }

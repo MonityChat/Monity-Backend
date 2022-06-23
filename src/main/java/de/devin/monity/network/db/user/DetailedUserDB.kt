@@ -50,6 +50,11 @@ data class UserProfile(val userName: String,
                        val lastSeen: Long,
                        val preferredStatus: Status)
 
+
+/**
+ * Contains all data around
+ * @see UserProfile
+ */
 object DetailedUserDB: Table("user_profile"), DBManager<UserProfile, UUID> {
 
     private val username = varchar("user_data_name", 48)

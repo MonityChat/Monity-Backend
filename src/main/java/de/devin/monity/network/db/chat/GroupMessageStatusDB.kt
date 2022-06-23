@@ -8,8 +8,20 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import java.util.UUID
 
 
+/**
+ * Models the status of a message similar to a private message status, but in a group there is an individual status for every user
+ * @param messageID id of message
+ * @param chatID id of group
+ * @param user user
+ * @param status messageStatus
+ */
 data class GroupMessageStatus(val messageID: UUID, val chatID: UUID, val user: UUID, val status: MessageStatus)
 
+
+/**
+ * Contains all data around
+ * @see GroupMessageStatus
+ */
 object GroupMessageStatusDB: Table("group_message_status"), DBManager<GroupMessageStatus, UUID> {
 
     private val messageID = varchar("group_message_status_message_id", 36)

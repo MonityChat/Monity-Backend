@@ -21,7 +21,7 @@ import de.devin.monity.util.ConsoleColors
 import de.devin.monity.util.Error
 import de.devin.monity.util.TypingManager
 import de.devin.monity.util.html.respondHomePage
-import filemanagment.filemanagers.ConfigFileManager
+import de.devin.monity.filemanagment.filemanagers.ConfigFileManager
 import de.devin.monity.util.logInfo
 import io.ktor.http.*
 import io.ktor.serialization.gson.*
