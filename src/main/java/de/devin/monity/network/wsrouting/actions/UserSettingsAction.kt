@@ -8,6 +8,10 @@ import org.json.JSONObject
 import java.util.*
 import de.devin.monity.util.Error
 
+
+/**
+ * Returns the settings of the user
+ */
 class UserSettingsGetAction: Action {
 
     override val name: String
@@ -20,6 +24,10 @@ class UserSettingsGetAction: Action {
     }
 }
 
+
+/**
+ * Changes the settings of the user
+ */
 class UserSettingsChangeAction: Action {
 
     override val name: String

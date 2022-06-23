@@ -15,6 +15,10 @@ import org.json.JSONObject
 import java.io.File
 import java.util.*
 
+
+/**
+ * Action when a user sends a message
+ */
 class PrivateChatSendMessageAction: Action {
 
     override val name: String
@@ -71,6 +75,9 @@ class PrivateChatSendMessageAction: Action {
     }
 }
 
+/**
+ * Return the 50 latest messages of the given chat
+ */
 class PrivateChatGetLatestMessagesAction: Action {
     override val name: String
         get() = "chat:private:get:messages:latest"
@@ -87,6 +94,7 @@ class PrivateChatGetLatestMessagesAction: Action {
         val chatID = UUID.fromString(chatIDRaw)
 
         if (!ChatDB.has(chatID)) return Error.CHAT_NOT_FOUND.toJson()
+        if (!ChatDB.isInChat(sender, chatID)) return Error.UNAUTHORIZED.toJson()
         val chat = ChatDB.get(chatID)
 
         val messages = chat.messages.sortedByDescending { it.index }.slice(0..50.coerceAtMost(chat.messages.size - 1))
@@ -112,6 +120,9 @@ class PrivateChatGetLatestMessagesAction: Action {
     }
 }
 
+/**
+ * Action when a user gets messages from a chat
+ */
 class PrivateChatGetMessagesAction: Action {
     override val name: String
         get() = "chat:private:get:messages"
@@ -126,6 +137,7 @@ class PrivateChatGetMessagesAction: Action {
         val amount = request.getInt("amount")
 
         if (!ChatDB.has(chatID)) return Error.CHAT_NOT_FOUND.toJson()
+        if (!ChatDB.isInChat(sender, chatID)) return Error.UNAUTHORIZED.toJson()
 
         val chat = ChatDB.get(chatID)
 
@@ -149,6 +161,9 @@ class PrivateChatGetMessagesAction: Action {
     }
 }
 
+/**
+ * Action when a user deletes a message
+ */
 class PrivateChatDeleteMessageAction: Action {
 
     override val name: String
@@ -164,6 +179,8 @@ class PrivateChatDeleteMessageAction: Action {
 
         if (!ChatDB.has(chatID)) return Error.CHAT_NOT_FOUND.toJson()
         if (!MessageDB.has(messageID)) return Error.MESSAGE_NOT_FOUND.toJson()
+        if (!ChatDB.isInChat(sender, chatID)) return Error.UNAUTHORIZED.toJson()
+
 
         val message = MessageDB.get(messageID)
 
@@ -190,6 +207,10 @@ class PrivateChatDeleteMessageAction: Action {
     }
 }
 
+/**
+ * Action when a user reacts to a message
+ * @see ReactionData
+ */
 class PrivateChatReactMessageAction: Action {
 
     override val name: String
@@ -202,19 +223,22 @@ class PrivateChatReactMessageAction: Action {
         val messageID = UUID.fromString(messageIDRaw)
         val reaction = request.getString("reaction")
 
+        var message = MessageDB.get(messageID)
+
         if (!MessageDB.has(messageID)) return Error.MESSAGE_NOT_FOUND.toJson()
+        if (!ChatDB.isInChat(sender, message.chat)) return Error.UNAUTHORIZED.toJson()
 
         ReactionDB.addReactionToMessage(messageID, reaction)
 
         val chat = ChatDB.get(MessageDB.get(messageID).chat)
+        message = MessageDB.get(messageID)
 
-        val message = MessageDB.get(messageID)
 
         val messageJSON = JSONObject()
         messageJSON.put("message", toJSON(message))
         messageJSON.getJSONObject("message").put("author", UserDB.get(message.sender).username)
         if (message.relatedTo != null) {
-            messageJSON.getJSONObject("message").getJSONObject("relatedTo").put("relatedAuthor", UserDB.get(message.relatedTo.sender).username)
+            messageJSON.getJSONObject("message").getJSONObject("relatedTo").put("relatedAuthor", UserDB.get(message.relatedTo!!.sender).username)
         }
 
         UserHandler.sendNotificationIfOnline( if (chat.initiator == sender) chat.otherUser else chat.initiator, PrivateChatUserReactedToMessageNotification(sender, messageJSON))
@@ -223,6 +247,9 @@ class PrivateChatReactMessageAction: Action {
     }
 }
 
+/**
+ * Action when a user edits an already sent message
+ */
 class PrivateChatEditMessageAction: Action {
     override val name: String
         get() = "chat:private:edit:message"
@@ -235,9 +262,12 @@ class PrivateChatEditMessageAction: Action {
 
         val chatIDRaw = request.getString("chatID")
         val chatID = UUID.fromString(chatIDRaw)
+        if (!ChatDB.isInChat(sender, chatID)) return Error.UNAUTHORIZED.toJson()
 
         if (!ChatDB.has(chatID)) return Error.CHAT_NOT_FOUND.toJson()
         if (!MessageDB.has(messageID)) return Error.MESSAGE_NOT_FOUND.toJson()
+        if (!ChatDB.isInChat(sender, chatID)) return Error.UNAUTHORIZED.toJson()
+
         val message = MessageDB.get(messageID)
         if (message.sender != sender) return Error.NOT_MESSAGE_AUTHOR.toJson()
 
@@ -263,6 +293,9 @@ class PrivateChatEditMessageAction: Action {
     }
 }
 
+/**
+ * Action when a users read a chat by entering it
+ */
 class PrivateChatMessageReadAction: Action {
 
     override val name: String

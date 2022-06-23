@@ -7,9 +7,9 @@ import de.devin.monity.network.db.user.DetailedUserDB
 import de.devin.monity.network.db.user.UserContactDB
 import de.devin.monity.network.db.user.UserDB
 import de.devin.monity.network.db.user.UserSettingsDB
-import de.devin.monity.network.httprouting.AuthRoute
-import de.devin.monity.network.httprouting.UploadImage
-import de.devin.monity.network.httprouting.UserRoute
+import de.devin.monity.network.httprouting.authRoute
+import de.devin.monity.network.httprouting.uploadImage
+import de.devin.monity.network.httprouting.userRoute
 import de.devin.monity.network.httprouting.handlePreRoute
 import de.devin.monity.network.wsrouting.ActionHandler
 import de.devin.monity.network.wsrouting.WebSocketHandler
@@ -156,9 +156,9 @@ object Monity {
                 get("/") {
                     respondHomePage(call)
                 }
-                AuthRoute()
-                UserRoute()
-                UploadImage()
+                authRoute()
+                userRoute()
+                uploadImage()
             }
         }.start(wait = false)
     }

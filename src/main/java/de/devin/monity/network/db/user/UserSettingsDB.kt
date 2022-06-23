@@ -7,9 +7,28 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import java.util.UUID
 
 
+/**
+ * Models the different settings of who can send the user a friend request
+ */
 enum class FriendRequestLevel { ALL, FRIENDS_OF_FRIENDS, NONE }
+
+/**
+ * Models the different settings of who can view the profile of the user
+ */
 enum class DataOptions { ALL, ONLY_CONTACTS, NONE }
+
+
+/**
+ * User settings store what kind of settings a user has made
+ * @see FriendRequestLevel
+ * @see DataOptions
+ */
 data class UserSettings(val id: UUID, val friendRequestLevel: FriendRequestLevel, val dataOptions: DataOptions)
+
+/**
+ * Contains all data around
+ * @see UserSettingsDB
+ */
 object UserSettingsDB: Table("user_settings"), DBManager<UserSettings, UUID> {
 
     private val userID = varchar("user_settings_uuid", 36)
@@ -39,6 +58,12 @@ object UserSettingsDB: Table("user_settings"), DBManager<UserSettings, UUID> {
             }
         }
     }
+
+    /**
+     * Sets the users new dataOptions
+     * @param id the user
+     * @param dataOptions the new dataOptions
+     */
     fun setUserDataOptions(id: UUID, dataOptions: DataOptions) {
         transaction {
             update ({userID eq id.toString()}) {
@@ -46,6 +71,12 @@ object UserSettingsDB: Table("user_settings"), DBManager<UserSettings, UUID> {
             }
         }
     }
+
+    /**
+     * Sets the users new FriendRequestLevel
+     * @param id of the user
+     * @param requestLevel the new friend request level
+     */
     fun setUserRequestLevel(id: UUID, requestLevel: FriendRequestLevel) {
         transaction {
             update({ userID eq id.toString() }) {

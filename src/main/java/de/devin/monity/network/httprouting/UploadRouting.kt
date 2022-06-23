@@ -21,10 +21,14 @@ import org.json.JSONObject
 import java.util.*
 
 
-fun Route.UploadImage() {
+/**
+ * The upload routing is used to upload files to the server while other tasks can be executed over the WebSocket
+ * @see FileManager
+ */
+fun Route.uploadImage() {
     route("/upload") {
         post("/profileImage") {
-            if (!authRoute(this.call, AuthLevel.AUTH_LEVEL_USER)) return@post call.respondText("Unauthorized", status = HttpStatusCode.Unauthorized)
+            if (!authRoute(call, AuthLevel.AUTH_LEVEL_USER)) return@post call.respondText("Unauthorized", status = HttpStatusCode.Unauthorized)
             val uuidString = call.request.queryParameters["uuid"] ?: return@post call.respondText("Missing parameter uuid", status = HttpStatusCode.BadRequest)
             if (!validUUID(uuidString)) return@post call.respondText("Invalid parameter UUID", status = HttpStatusCode.BadRequest)
 
@@ -62,7 +66,7 @@ fun Route.UploadImage() {
         }
 
         post ("/chatFile") {
-            if (!authRoute(this.call, AuthLevel.AUTH_LEVEL_USER)) return@post call.respondText("Unauthorized", status = HttpStatusCode.Unauthorized)
+            if (!authRoute(call, AuthLevel.AUTH_LEVEL_USER)) return@post call.respondText("Unauthorized", status = HttpStatusCode.Unauthorized)
             val chatIDString = call.request.queryParameters["chatID"] ?: return@post call.respondText("Missing parameter uuid", status = HttpStatusCode.BadRequest)
             val fileName = call.request.queryParameters["fileName"] ?: return@post call.respondText("Missing parameter fileName", status = HttpStatusCode.BadRequest)
             var embedIDRaw = call.request.queryParameters["embedID"] ?: return@post call.respondText("Missing parameter embedID", status = HttpStatusCode.BadRequest)

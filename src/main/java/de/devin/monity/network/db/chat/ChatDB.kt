@@ -65,6 +65,10 @@ object ChatDB: Table("chats"), DBManager<ChatData, UUID> {
         return transaction { select(((initiator eq user2.toString()) and (otherUser eq user1.toString()) ) or ((initiator eq user1.toString() and (otherUser eq user2.toString())))).map { get(UUID.fromString(it[chatID])) }[0] }
     }
 
+    fun isInChat(user: UUID, chat: UUID): Boolean {
+        return get(chat).initiator == user || get(chat).otherUser == user
+    }
+
     override fun insert(obj: ChatData) {
         transaction {
             insert {

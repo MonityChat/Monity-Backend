@@ -15,6 +15,9 @@ import org.json.JSONObject
 import java.util.*
 
 
+/**
+ * Action when a user sends a message
+ */
 class GroupChatSendMessageAction: Action {
 
     override val name: String
@@ -63,6 +66,9 @@ class GroupChatSendMessageAction: Action {
 }
 
 
+/**
+ * Action when a user deletes a message
+ */
 class GroupChatDeleteMessageAction: Action {
     override val name: String
         get() = "chat:group:delete:message"
@@ -89,9 +95,12 @@ class GroupChatDeleteMessageAction: Action {
     }
 }
 
+/**
+ * Action when a user edits a message
+ */
 class GroupChatEditMessageAction: Action {
     override val name: String
-        get() = "chat:group:delete:edit"
+        get() = "chat:group:message:edit"
     override val parameters: List<Parameter>
         get() = listOf(Parameter("chatID"), Parameter("messageID"), Parameter("newContent"))
 
@@ -114,6 +123,10 @@ class GroupChatEditMessageAction: Action {
     }
 }
 
+
+/**
+ * Action when a user creates a new group
+ */
 class GroupChatCreateAction: Action {
 
     override val name: String
@@ -144,6 +157,9 @@ class GroupChatCreateAction: Action {
     }
 }
 
+/**
+ * Action when a user requests to join a group
+ */
 class GroupChatRequestInviteAction: Action {
     override val name: String
         get() = "chat:group:request"
@@ -173,6 +189,9 @@ class GroupChatRequestInviteAction: Action {
     }
 }
 
+/**
+ * Action when a user declines a join request from another user
+ */
 class GroupChatDeclineRequestAction: Action {
 
     override val name: String
@@ -198,6 +217,9 @@ class GroupChatDeclineRequestAction: Action {
     }
 }
 
+/**
+ * Action when a user accepts the join request of another user
+ */
 class GroupChatAcceptRequestAction: Action {
 
     override val name: String
@@ -230,6 +252,9 @@ class GroupChatAcceptRequestAction: Action {
     }
 }
 
+/**
+ * Action when a user invites another user
+ */
 class GroupChatInviteUserAction: Action {
 
     override val name: String
@@ -265,6 +290,9 @@ class GroupChatInviteUserAction: Action {
     }
 }
 
+/**
+ * Action when a user kicks another user
+ */
 class GroupChatKickMember: Action {
 
 
@@ -285,6 +313,9 @@ class GroupChatKickMember: Action {
     }
 }
 
+/**
+ * Action when a user accepts an invitation
+ */
 class GroupChatAcceptInviteAction: Action {
 
     override val name: String
@@ -309,10 +340,13 @@ class GroupChatAcceptInviteAction: Action {
     }
 }
 
+/**
+ * Action when a user declines an invitation
+ */
 class GroupChatDeclineInviteAction: Action {
 
     override val name: String
-        get() = "chat:group:invite:accepted"
+        get() = "chat:group:invite:decline"
     override val parameters: List<Parameter>
         get() = listOf(Parameter("groupID"))
 
@@ -329,6 +363,9 @@ class GroupChatDeclineInviteAction: Action {
     }
 }
 
+/**
+ * Action when a user cancels an invitation
+ */
 class GroupChatCancelInviteAction: Action {
 
     override val name: String

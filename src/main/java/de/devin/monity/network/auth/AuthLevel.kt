@@ -1,5 +1,8 @@
 package de.devin.monity.network.auth
 
+/**
+ * Model authentication levels
+ */
 enum class AuthLevel(val nextLevel: AuthLevel?, val weight: Int) {
 
 

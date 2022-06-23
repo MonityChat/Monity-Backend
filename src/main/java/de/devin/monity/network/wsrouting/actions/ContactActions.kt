@@ -17,6 +17,9 @@ import de.devin.monity.util.notifications.ContactAddNotification
 import de.devin.monity.util.notifications.ContactAddRequestNotification
 import de.devin.monity.util.notifications.PrivateChatCreatedNotification
 
+/**
+ * Action when a user sends a request to another user
+ */
 class ContactAddAction: Action {
 
     override val name: String = "contact:add"
@@ -57,6 +60,9 @@ class ContactAddAction: Action {
     }
 }
 
+/**
+ * Action when a user accepts a request
+ */
 class ContactAcceptAction: Action {
 
     override val name: String
@@ -86,6 +92,9 @@ class ContactAcceptAction: Action {
     }
 }
 
+/**
+ * Action when a user declines a request
+ */
 class ContactDeclineAction: Action {
     override val name: String
         get() = "contact:decline"
@@ -106,6 +115,9 @@ class ContactDeclineAction: Action {
     }
 }
 
+/**
+ * Action when a user blocks another user
+ */
 class ContactBlockAction: Action {
     override val name: String
         get() = "contact:block"
@@ -125,6 +137,9 @@ class ContactBlockAction: Action {
     }
 }
 
+/**
+ * Action when a user gets his contacts
+ */
 class ContactGetAction: Action {
 
     override val name: String
@@ -158,6 +173,9 @@ class ContactGetAction: Action {
     }
 }
 
+/**
+ * Action when a user gets his open requests
+ */
 class ContactGetOpenRequest: Action {
     override val name: String
         get() = "contact:get:request"
@@ -173,6 +191,9 @@ class ContactGetOpenRequest: Action {
     }
 }
 
+/**
+ * Action to search users based on their name
+ */
 class ContactSearchAction: Action {
     override val name: String = "contact:search"
     override val parameters: List<Parameter> = listOf(Parameter("keyword"))

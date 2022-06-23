@@ -19,7 +19,11 @@ import java.util.*
 private val userEmailConfirmationMap = HashMap<UUID, UserData>()
 private val userEmailResetMap = HashMap<UUID, UserData>()
 
-fun Route.UserRoute() {
+
+/**
+ * The routing which handles every available user action.
+ */
+fun Route.userRoute() {
     get("/user/{action}") {
         val action = call.parameters["action"] ?: return@get call.respondText("Missing ", status = HttpStatusCode.BadRequest)
 
@@ -104,7 +108,7 @@ fun Route.UserRoute() {
 
         when (action) {
             "register" -> run {
-                error = userRegister(user.username, user.password, user.email, auth, user.salt)
+                error = userRegister(user.username, user.password, user.email, user.salt)
             }
             "resend" -> run {
                 error = resendEmail(user.email)
@@ -125,6 +129,15 @@ fun Route.UserRoute() {
     }
 }
 
+
+/**
+ * Userdata contains all IMPORTANT and BASIC information about every user.
+ * @param username of the user
+ * @param password of the user
+ * @param salt of the user
+ * @param email of the user
+ * @param uuid of the user
+ */
 data class UserData(
     val username: String,
     val password: String,
@@ -133,6 +146,11 @@ data class UserData(
     val uuid: UUID
 )
 
+/**
+ * A container class to store a salt directly as a data class
+ * A salt is used to hash a password securely
+ * @param salt the salt
+ */
 data class Salt(val salt: String)
 
 private fun resetPasswordConfirm(id: UUID, newUser: UserData): Error {
@@ -142,7 +160,6 @@ private fun resetPasswordConfirm(id: UUID, newUser: UserData): Error {
     }
 
     val user = userEmailResetMap[id]
-    logInfo(user!!.uuid)
     UserDB.updatePasswordAndSalt(user!!.uuid, newUser.password, newUser.salt)
 
     return Error.NONE
@@ -300,7 +317,7 @@ private fun resendEmail(emailAddress: String): Error {
     return Error.NONE
 }
 
-private fun userRegister(username: String, password: String, emailAddress: String, auth: String, salt: String): Error {
+private fun userRegister(username: String, password: String, emailAddress: String, salt: String): Error {
 
     //Damit sich ein Nutzer registrieren kann, darf dieser nutzername sowohl als auch E-Mail
     // nicht bereits verwendet worden sein

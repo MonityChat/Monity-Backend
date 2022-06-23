@@ -7,6 +7,11 @@ import de.devin.monity.util.Error
 import de.devin.monity.util.dataconnectors.UserHandler
 import de.devin.monity.util.notifications.UserStartedTypingNotification
 
+
+/**
+ * Action when the user is typing
+ * @see TypingManager
+ */
 class UserTypingAction: Action {
 
     override val name: String

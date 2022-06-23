@@ -11,6 +11,10 @@ import de.devin.monity.util.toJSON
 import org.json.JSONObject
 import java.util.*
 
+/**
+ * Updates the profile of the User
+ * @see UserProfile
+ */
 class ProfileUpdateAction: Action {
 
     override val name: String
@@ -37,6 +41,10 @@ class ProfileUpdateAction: Action {
     }
 }
 
+/**
+ * Returns the profile of another user
+ * @see UserProfile
+ */
 class ProfileGetOtherAction: Action {
     override val name: String
         get() = "profile:get:other"
@@ -50,6 +58,10 @@ class ProfileGetOtherAction: Action {
     }
 }
 
+/**
+ * Returns the profile of the user
+ * @see UserProfile
+ */
 class ProfileGetSelfAction: Action {
 
     override val name: String

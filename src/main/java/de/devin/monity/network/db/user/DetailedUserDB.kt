@@ -8,14 +8,39 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import java.util.*
 
 
+/**
+ * Creates a new default user
+ * @param username the username
+ * @param uuid uuid of the user
+ * @return UserProfile
+ */
 fun createDefaultUser(username: String, uuid: UUID): UserProfile {
     return UserProfile(username, "/images/monity/default.png", uuid, "Hi im new here", Status.ONLINE, "I LOVE Monity", System.currentTimeMillis(), Status.ONLINE)
 }
 
+/**
+ * Creates a default userprofile for an anonymoususer.
+ * @see UserSettings
+ * @param username the username
+ * @param uuid the uuid of the user
+ * @return Anonymous user
+ */
 fun createAnonymousUser(username: String, uuid: UUID): UserProfile {
     return UserProfile(username, "/images/monity/default.png", uuid, "", Status.OFFLINE, "", System.currentTimeMillis(), Status.OFFLINE)
 }
 
+/**
+ * A user profile contains all detailed information about a user.
+ * This information is also called the UserProfile
+ * @param userName the username
+ * @param profileImageLocation the location of the profile image
+ * @param uuid the uuid of the user
+ * @param description the description of a user
+ * @param status the online status of the user
+ * @param shortStatus the short status of the user (max length 128)
+ * @param lastSeen timestamp when the user logged off the last time
+ * @param preferredStatus the preferredStatus of the user. When the user is online it will display this status, when the user is offline it will state offline
+ */
 data class UserProfile(val userName: String,
                        val profileImageLocation: String,
                        val uuid: UUID,
@@ -56,18 +81,32 @@ object DetailedUserDB: Table("user_profile"), DBManager<UserProfile, UUID> {
             Status.valueOf(it[preferredStatus])) } }[0]
     }
 
+    /**
+     * Sets the online status of the user
+     * @param user the user
+     * @param status the status
+     */
     fun setStatus(user: UUID, status: Status) {
         transaction {
             update({ uuid eq user.toString()}) { it[DetailedUserDB.status] = status.toString() }
         }
     }
 
+    /**
+     * Updates when the user was last seen
+     * @param user the user
+     */
     fun updateLastSeen(user: UUID) {
         transaction {
             update({ uuid eq user.toString()}) { it[lastSeen] = System.currentTimeMillis() }
         }
     }
 
+    /**
+     * Updates the profile picture of the user
+     * @param user the user
+     * @param url new path to image
+     */
     fun updateProfilePicture(user: UUID, url: String) {
         transaction {
             update({ uuid eq user.toString() }) {
@@ -76,6 +115,11 @@ object DetailedUserDB: Table("user_profile"), DBManager<UserProfile, UUID> {
         }
     }
 
+    /**
+     * Updates the users profile
+     * @param user the user
+     * @param profile the new profile
+     */
     fun updateProfile(user: UUID, profile: UserProfile) {
         transaction {
             update({ uuid eq user.toString()}) {

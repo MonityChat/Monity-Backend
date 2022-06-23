@@ -13,6 +13,12 @@ import io.ktor.server.routing.*
 import java.util.*
 
 
+/**
+ * Authorization is so that a websocket can show that it is authorized to execute the wanted actions.
+ * A basic key can be received any time. Only by login in into an account will upgrade the key so other actions can be executed.
+ * @see authRoute
+ * @see AuthHandler.levelUpAuthKey
+ */
 data class Authorization(val uuid: UUID, val authLevel: AuthLevel)
 
 /**
@@ -23,7 +29,11 @@ fun handlePreRoute(call: RoutingApplicationCall) {
         logInfo("Route called: ${ConsoleColors.PURPLE}${call.request.path()} ${ConsoleColors.RESET}by ${ConsoleColors.GREEN}${call.request.host()}")
 }
 
-fun Route.AuthRoute() {
+
+/**
+ * The route to receive a auth key
+ */
+fun Route.authRoute() {
     route("/auth") {
         get {
             var uuid = UUID.randomUUID()
@@ -35,11 +45,24 @@ fun Route.AuthRoute() {
     }
 }
 
+/**
+ * This function provides an easy way of looking if an HTTP request is really allowed to perform what it wants to perform.
+ * It will check if the necessary headers are given and also if the authorization key is on a high enough level
+ * @param call the call
+ * @return true if the call is allowed false otherwise
+ */
 fun authRoute(call: ApplicationCall): Boolean {
     return authRoute(call, AuthLevel.AUTH_LEVEL_NONE)
 }
 
 
+/**
+ *
+ * This function provides an easy way of looking if an HTTP request is really allowed to perform what it wants to perform.
+ * It will check if the necessary headers are given and also if the authorization key is on a high enough level
+ * @param call the call
+ * @param level the required level
+ */
 fun authRoute(call: ApplicationCall, level: AuthLevel): Boolean {
     val authentication = call.request.headers["authorization"] ?: run { logError("Auth required call without auth header @${call.request.path()} from ${call.request.origin.remoteHost}"); return false }// No authentication header
 
