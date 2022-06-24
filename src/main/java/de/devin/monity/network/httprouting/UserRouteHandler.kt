@@ -19,6 +19,8 @@ import java.util.*
 private val userEmailConfirmationMap = HashMap<UUID, UserData>()
 private val userEmailResetMap = HashMap<UUID, UserData>()
 
+const val domain = "http://localhost:3000"
+const val domainAPI = "http://localhost:8808"
 
 /**
  * The routing which handles every available user action.
@@ -43,7 +45,7 @@ fun Route.userRoute() {
                 )
 
                 val error = confirmUser(id, uuid)
-                call.respondRedirect("http://localhost:3000/success?error=$error")
+                call.respondRedirect("$domain/success?error=$error")
                 
             }
             "salt" -> run {
@@ -78,7 +80,7 @@ fun Route.userRoute() {
             }
             "resetPasswordRedirect" -> run {
                 val id = call.request.queryParameters["id"] ?: return@get call.respondText("Parameter ID missing", status = HttpStatusCode.BadRequest)
-                call.respondRedirect("http://localhost:3000/reset-password?id=$id")
+                call.respondRedirect("$domain/reset-password?id=$id")
             }
         }
     }
@@ -178,7 +180,7 @@ private fun resetPassword(user: UserData): Error {
 
 
 
-    val link = "http://127.0.0.1:8808/user/resetPasswordRedirect?&id=$id"
+    val link = "$domainAPI/user/resetPasswordRedirect?&id=$id"
 
     val email = htmlEmail()
     email.addTo(user.email)
@@ -193,9 +195,7 @@ private fun resetPassword(user: UserData): Error {
     htmlLines = htmlLines.replace("placeholder:button", "Reset password")
 
 
-
     email.setHtmlMsg(htmlLines)
-    logInfo("Sending reset email to ${user.email}")
     try {
         email.send()
     } catch (e: Exception) {
@@ -246,7 +246,6 @@ private fun confirmUser(id: UUID, uuid: UUID): Error {
     UserSettingsDB.insert(UserSettings(user.uuid, FriendRequestLevel.ALL, DataOptions.ALL))
 
 
-    logInfo("Confirmed user ${user.username}")
     userEmailConfirmationMap.remove(id)
     return Error.NONE
 }
@@ -297,7 +296,7 @@ private fun resendEmail(emailAddress: String): Error {
     val user = userEmailConfirmationMap.values.firstOrNull { it.email == emailAddress } ?: return Error.EMAIL_NOT_FOUND
     val id = userEmailConfirmationMap.keys.first { userEmailConfirmationMap[it]!!.email == emailAddress }
 
-    val link = "http://127.0.0.1:8808/user/confirm?&id=$id&uuid=${user.uuid}"
+    val link = "$domainAPI/user/confirm?&id=$id&uuid=${user.uuid}"
 
     val email = htmlEmail()
     email.addTo(emailAddress)
@@ -343,7 +342,7 @@ private fun userRegister(username: String, password: String, emailAddress: Strin
     var id = UUID.randomUUID()
     while(userEmailConfirmationMap.containsKey(uuid)) id = UUID.randomUUID()
 
-    val link = "http://127.0.0.1:8808/user/confirm?&id=$id&uuid=$uuid"
+    val link = "$domainAPI/user/confirm?&id=$id&uuid=$uuid"
 
     //wichtig ist, der User soll jetzt noch nicht in die Datenbank gespeichert werden
     //da, wenn er bereits gespeichert wird der Name sowie E-Mail Adresse fest sind und blockiert werden
