@@ -17,12 +17,9 @@ import de.devin.monity.network.wsrouting.WebSocketHandler.close
 import de.devin.monity.network.wsrouting.WebSocketHandler.closeConnection
 import de.devin.monity.network.wsrouting.WebSocketHandler.send
 import de.devin.monity.network.wsrouting.WebSocketHandler.sendAndClose
-import de.devin.monity.util.ConsoleColors
-import de.devin.monity.util.Error
-import de.devin.monity.util.TypingManager
 import de.devin.monity.util.html.respondHomePage
 import de.devin.monity.filemanagment.filemanagers.ConfigFileManager
-import de.devin.monity.util.logInfo
+import de.devin.monity.util.*
 import io.ktor.http.*
 import io.ktor.serialization.gson.*
 import io.ktor.server.application.*
@@ -64,9 +61,13 @@ object Monity {
      * - HTTP Server
      * - WebSocket Server
      * - Database
+     *
      * - Validation Service
+     * @see SocketValidationTask
      * - ActionHandler
+     * @see ActionHandler+
      * - TypingManager
+     * @see TypingManager
      */
     fun boot() {
         logInfo("Data: ${dataFolder.absolutePath}")
@@ -74,12 +75,16 @@ object Monity {
         logInfo("Launching HTTP Server on port ${ConsoleColors.YELLOW}${config.getHTTPPort()}")
 
         WebSocketHandler.startValidationService()
+        WebSocketHandler.startActivityService()
+
+        logInfo("Connecting to Database ${ConsoleColors.YELLOW}${config.getSQLHost()}:${config.getSQLPort()}/${config.getSQLDatabase()}")
+        runDatabase()
+
         runHTTPServer()
 
         logInfo("Server running on port ${ConsoleColors.YELLOW}${config.getHTTPPort()}")
-        logInfo("Connecting to Database ${ConsoleColors.YELLOW}${config.getSQLHost()}:${config.getSQLPort()}/${config.getSQLDatabase()}")
 
-        runDatabase()
+        setAllUsersToOffline()
         ActionHandler.loadDefaultActions()
         TypingManager.loadTimer()
     }
@@ -125,7 +130,6 @@ object Monity {
                             } else {
                                 try {
                                     val returnPacket = WebSocketHandler.handleIncomingContent(frame, this)
-                                    logInfo(returnPacket.toString())
                                     send(returnPacket)
                                 } catch (e: java.lang.Exception) {
                                     //if anything goes wrong while executing the given action, it will return an error to the user and close the connection.
@@ -193,6 +197,12 @@ object Monity {
             UserSettingsDB.load()
             ReactionDB.load()
         }
+    }
+}
+
+private fun setAllUsersToOffline() {
+    for (user in UserDB.getAllUsers()) {
+        DetailedUserDB.setStatus(user, Status.OFFLINE)
     }
 }
 

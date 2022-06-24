@@ -37,7 +37,7 @@ class GroupChatSendMessageAction: Action {
         val user = UserHandler.getOnlineUser(sender)
         val chats = user.groupChats
 
-        if (chats.none {it.id == chatID}) return Error.CHAT_NOT_FOUND.toJson()
+        if (chats.none {it.groupID == chatID}) return Error.CHAT_NOT_FOUND.toJson()
         val chat = GroupDB.get(chatID)
 
         if (GroupSettingDB.get(chatID).rolesOnly) {
@@ -45,14 +45,14 @@ class GroupChatSendMessageAction: Action {
         }
 
         val messageID = MessageDB.getFreeUUID()
-        val index = MessageDB.getNextIndex(chat.id)
+        val index = MessageDB.getNextIndex(chat.groupID)
         val embeds = if (embedID.isNotEmpty()) MediaDB.get(UUID.fromString(embedID)) else listOf()
         val related = if (relatedID.isNotEmpty()) MessageDB.get(UUID.fromString(relatedID)) else null
 
 
         val status = if (chat.members.all { UserHandler.isOnline(it.id) }) MessageStatus.RECEIVED else MessageStatus.PENDING
 
-        val message = MessageData(sender, messageID, chat.id, content, related, embeds, listOf(), index, sent, false, status)
+        val message = MessageData(sender, messageID, chat.groupID, content, related, embeds, listOf(), index, sent, false, status)
 
         MessageDB.insert(message)
 

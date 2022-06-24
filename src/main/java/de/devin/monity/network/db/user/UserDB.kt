@@ -36,6 +36,14 @@ object UserDB: Table("user"), DBManager<UserData, UUID> {
     }
 
     /**
+     * Return a list of every existing user.
+     * @return List containing UUID of every user
+     */
+    fun getAllUsers(): List<UUID> {
+        return transaction { selectAll().map { UUID.fromString(it[uuid]) } }
+    }
+
+    /**
      * Whether the email is used or not
      * @param email the email
      * @return true if exists false otherwise

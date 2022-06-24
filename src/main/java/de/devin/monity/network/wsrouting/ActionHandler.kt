@@ -112,6 +112,7 @@ object ActionHandler {
                 val returnJson = JSONObject()
                 returnJson.put("content", action.execute(sender, request))
                 returnJson.put("action", actionRequest)
+                UserActivityTimer.userExecutedAction(sender)
 
                 return returnJson
             }

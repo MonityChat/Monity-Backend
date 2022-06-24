@@ -33,6 +33,10 @@ object WebSocketHandler {
         socketValidationExecutor.scheduleAtFixedRate(SocketValidationTask, 0, 1000, TimeUnit.MILLISECONDS)
     }
 
+    fun startActivityService() {
+        socketValidationExecutor.scheduleAtFixedRate(UserActivityTimer, 0, 1, TimeUnit.MINUTES)
+    }
+
     /**
      * Handles incoming websockets request
      *
@@ -93,7 +97,7 @@ object WebSocketHandler {
                     socketAuthMap[user.uuid] = socket
 
                     executeLoginActions(user.uuid)
-
+                    UserActivityTimer.userExecutedAction(user.uuid)
                     return socket.send(Error.NONE)
                 }
                 else -> {
@@ -136,7 +140,7 @@ object WebSocketHandler {
      * Will execute when a user logs of
      * @param user logging off
      */
-    fun executeLogoutActions(user: UUID) {
+    private fun executeLogoutActions(user: UUID) {
         DetailedUserDB.setStatus(user, Status.OFFLINE)
 
         for (contact in UserContactDB.getContactsFrom(user)) {
@@ -173,6 +177,8 @@ object WebSocketHandler {
         val json = reader.json
 
         if (!json.has("action")) return Error.INVALID_JSON_STRUCTURE.toJson()
+
+
 
         val action = json.getString("action")
 
