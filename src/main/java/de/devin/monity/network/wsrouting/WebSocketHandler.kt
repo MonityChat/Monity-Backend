@@ -112,7 +112,7 @@ object WebSocketHandler {
      * Will execute all default actions when a user connects to the webserver
      * @param user who logged in
      */
-    fun executeLoginActions(user: UUID) {
+    private fun executeLoginActions(user: UUID) {
         if (!UserHandler.isOnline(user)) error("Cant execute login actions when user is offline")
 
         //Alle nachrichten auf erhalten setzen
@@ -127,13 +127,13 @@ object WebSocketHandler {
             }
         }
         //Seinen eingestellten Status setzen
-        onlineUser.setStatus(DetailedUserDB.get(user).preferredStatus)
+        DetailedUserDB.setStatus(onlineUser.uuid, DetailedUserDB.get(user).preferredStatus)
 
         for (contact in onlineUser.contacts) {
             UserHandler.sendNotificationIfOnline(contact, UserWentOnlineNotification(user))
         }
 
-        onlineUser.updateLastSeen()
+        DetailedUserDB.updateLastSeen(onlineUser.uuid)
     }
 
     /**

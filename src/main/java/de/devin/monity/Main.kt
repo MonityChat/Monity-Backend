@@ -120,9 +120,10 @@ object Monity {
             routing {
                 webSocket("/monity") {
                     try {
+                        //Sobald sich ein Nutzer verbindet
                         WebSocketHandler.handleIncomingRequest(this)
 
-                        //everytime the user sends something over the websocket
+                        //Sobald ein Nutzer Text über den Socket schickt
                         for (frame in incoming) {
                             if (!WebSocketHandler.isValidConnection(this)) {
                                 sendAndClose(Error.UNAUTHORIZED)

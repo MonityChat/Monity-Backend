@@ -36,11 +36,11 @@ fun handlePreRoute(call: RoutingApplicationCall) {
 fun Route.authRoute() {
     route("/auth") {
         get {
-            var uuid = UUID.randomUUID()
-            while (AuthHandler.isAuthenticated(uuid)) uuid = UUID.randomUUID()
-            call.respond(Authorization(uuid, AuthLevel.AUTH_LEVEL_NONE))
-            logInfo("Authenticated UUID: $uuid")
-            AuthHandler.addDefaultAuthKey(uuid)
+            var uuid = UUID.randomUUID()                                        // Generiere zufällige Authentifizierung
+            while (AuthHandler.isAuthenticated(uuid)) uuid = UUID.randomUUID()  // Wenn es die UUID bereits gibt, erstelle neue
+            call.respond(Authorization(uuid, AuthLevel.AUTH_LEVEL_NONE))        // Antworte auf die Anfrage mit dem Schlüssel
+            logInfo("Authenticated UUID: $uuid")                                // Notiere, dass Authentifizierung erfolgt ist
+            AuthHandler.addDefaultAuthKey(uuid)                                 // Füge den Schlüssel zum Authentifizierunghandler
         }
     }
 }

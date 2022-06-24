@@ -43,7 +43,7 @@ fun Route.userRoute() {
                 )
 
                 val error = confirmUser(id, uuid)
-                call.respond(error)
+                call.respondRedirect("http://localhost:3000/success?error=$error")
                 
             }
             "salt" -> run {
@@ -254,31 +254,35 @@ private fun confirmUser(id: UUID, uuid: UUID): Error {
 private fun login(user: UserData, auth: UUID): Error {
 
 
-    val userName = user.username.ifEmpty { null }
-    val email = user.email.ifEmpty { null }
-
+    val userName = user.username.ifEmpty { null } //schauen ob der nutzername mit angeben wurde
+    val email = user.email.ifEmpty { null }       //schauen ob die email mit angeben wurde
 
     if (userName == null && email == null) {
-        return Error.INVALID_LOGIN_REQUEST
+        return Error.INVALID_LOGIN_REQUEST  // falls keine Email und kein Nutzername angegeben abbrechen
     }
 
+    //Überprüfen ob Email oder Username existieirt
     if (userName != null && !UserDB.hasUserName(userName)) {
         return Error.USER_NOT_FOUND
     }
 
     if (email != null && !UserDB.hasEmail(email)) {
-        return Error.USER_NOT_FOUND
+        return Error.EMAIL_NOT_FOUND
     }
 
+
+    //Den nutzername anhand des Nutzers und Email
     val userSaved: UserData = if (userName == null)
         UserDB.getByEmail(email!!)
     else
         UserDB.getByName(userName)
 
+    //Password überprüfung
     if (userSaved.password != user.password) {
         return Error.INVALID_PASSWORD
     }
 
+    //Authentifizierung hochstufen
     AuthHandler.levelUpAuthKey(auth)
 
     return Error.NONE

@@ -28,7 +28,8 @@ data class GroupChatData(val initiator: UUID,
                          val started: Long,
                          val groupSettings: GroupSettings,
                          val groupInvites: List<GroupInvite>,
-                         val groupProfile: GroupProfile,)
+                         val groupProfile: GroupProfile,
+                         val groupRequests: List<GroupRequest>)
 
 /**
  * A group member is a user which is in the group with the given id
@@ -71,7 +72,8 @@ object GroupDB: Table("groups"), DBManager<GroupChatData, UUID> {
                     it[started],
                     GroupSettingDB.get(id),
                     GroupMemberInvitesDB.get(id),
-                    GroupProfileDB.get(id)
+                    GroupProfileDB.get(id),
+                    GroupRequestDB.get(id)
                 )
             }[0]
         }

@@ -146,7 +146,7 @@ class GroupChatCreateAction: Action {
 
         val groupID = GroupDB.newUUID()
         val groupInvites = invites.map { GroupInvite(UUID.fromString(it), groupID) }
-        val groupChat = GroupChatData(sender, listOf(GroupMemberData(sender, groupID, GroupRole.OWNER)), listOf(), groupID, System.currentTimeMillis(), settings, groupInvites, profile)
+        val groupChat = GroupChatData(sender, listOf(GroupMemberData(sender, groupID, GroupRole.OWNER)), listOf(), groupID, System.currentTimeMillis(), settings, groupInvites, profile, emptyList())
 
         GroupDB.insert(groupChat)
         GroupSettingDB.insert(settings)
