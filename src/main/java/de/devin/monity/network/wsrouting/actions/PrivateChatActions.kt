@@ -143,7 +143,8 @@ class PrivateChatGetMessagesAction: Action {
 
         val messages = mutableListOf<MessageData>()
         for (number in (start - amount).coerceAtLeast(0)..start) {
-            messages += chat.messages.first {it.index == number.toLong()}
+            if (chat.messages.any {it.index == number.toLong()})
+                messages += chat.messages.first {it.index == number.toLong()}
         }
         val returnList = messages.sortedByDescending { it.index }
 
@@ -177,6 +178,12 @@ class PrivateChatDeleteMessageAction: Action {
         val messageIDRaw = request.getString("messageID")
         val messageID = UUID.fromString(messageIDRaw)
 
+        val chat = ChatDB.get(chatID)
+        val targetUUID = if (chat.initiator == sender) chat.otherUser else chat.initiator
+
+
+        if (UserContactDB.hasBlocked(sender, targetUUID)) return Error.USER_BLOCKED_TARGET.toJson()
+        if (UserContactDB.hasBlocked(targetUUID, sender)) return Error.TARGET_BLOCKED_USER.toJson()
         if (!ChatDB.has(chatID)) return Error.CHAT_NOT_FOUND.toJson()
         if (!MessageDB.has(messageID)) return Error.MESSAGE_NOT_FOUND.toJson()
         if (!ChatDB.isInChat(sender, chatID)) return Error.UNAUTHORIZED.toJson()
@@ -197,7 +204,6 @@ class PrivateChatDeleteMessageAction: Action {
             ReactionDB.deleteReactions(message.attachedMedia[0].id)
         }
 
-        val chat = ChatDB.get(chatID)
         val otherUser = if (chat.initiator == sender) chat.otherUser else chat.initiator
 
 
@@ -225,14 +231,17 @@ class PrivateChatReactMessageAction: Action {
 
         var message = MessageDB.get(messageID)
 
+        val chat = ChatDB.get(message.chat)
+        val targetUUID = if (chat.initiator == sender) chat.otherUser else chat.initiator
+
+        if (UserContactDB.hasBlocked(sender, targetUUID)) return Error.USER_BLOCKED_TARGET.toJson()
+        if (UserContactDB.hasBlocked(targetUUID, sender)) return Error.TARGET_BLOCKED_USER.toJson()
         if (!MessageDB.has(messageID)) return Error.MESSAGE_NOT_FOUND.toJson()
         if (!ChatDB.isInChat(sender, message.chat)) return Error.UNAUTHORIZED.toJson()
 
         ReactionDB.addReactionToMessage(messageID, reaction)
 
-        val chat = ChatDB.get(MessageDB.get(messageID).chat)
         message = MessageDB.get(messageID)
-
 
         val messageJSON = JSONObject()
         messageJSON.put("message", toJSON(message))
@@ -264,6 +273,11 @@ class PrivateChatEditMessageAction: Action {
         val chatID = UUID.fromString(chatIDRaw)
         if (!ChatDB.isInChat(sender, chatID)) return Error.UNAUTHORIZED.toJson()
 
+        val chat = ChatDB.get(chatID)
+        val targetUUID = if (chat.initiator == sender) chat.otherUser else chat.initiator
+
+        if (UserContactDB.hasBlocked(sender, targetUUID)) return Error.USER_BLOCKED_TARGET.toJson()
+        if (UserContactDB.hasBlocked(targetUUID, sender)) return Error.TARGET_BLOCKED_USER.toJson()
         if (!ChatDB.has(chatID)) return Error.CHAT_NOT_FOUND.toJson()
         if (!MessageDB.has(messageID)) return Error.MESSAGE_NOT_FOUND.toJson()
         if (!ChatDB.isInChat(sender, chatID)) return Error.UNAUTHORIZED.toJson()
@@ -276,7 +290,6 @@ class PrivateChatEditMessageAction: Action {
 
         val editMessage = MessageDB.get(messageID)
 
-        val chat = ChatDB.get(chatID)
         val otherUser = if (chat.initiator == sender) chat.otherUser else chat.initiator
 
 

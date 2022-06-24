@@ -1,15 +1,13 @@
 package de.devin.monity.network.wsrouting.actions
 
-import de.devin.monity.network.db.user.DataOptions
-import de.devin.monity.network.db.user.DetailedUserDB
-import de.devin.monity.network.db.user.UserProfile
-import de.devin.monity.network.db.user.UserSettingsDB
+import de.devin.monity.network.db.user.*
 import de.devin.monity.util.Status
 import de.devin.monity.util.dataconnectors.UserHandler
 import de.devin.monity.util.notifications.UserUpdatesProfileNotification
 import de.devin.monity.util.toJSON
 import org.json.JSONObject
 import java.util.*
+import de.devin.monity.util.Error
 
 /**
  * Updates the profile of the User
@@ -53,6 +51,9 @@ class ProfileGetOtherAction: Action {
 
     override fun execute(sender: UUID, request: JSONObject): JSONObject {
         val targetUUID = UUID.fromString(request.getString("target"))
+
+        if (UserContactDB.hasBlocked(targetUUID, sender)) return Error.TARGET_BLOCKED_USER.toJson()
+
         val profile = DetailedUserDB.get(targetUUID)
         return toJSON(profile)
     }

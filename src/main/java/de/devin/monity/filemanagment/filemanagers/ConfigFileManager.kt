@@ -27,6 +27,6 @@ object ConfigFileManager: FileManager("config.yml", "config.yml") {
     fun getEmailPassword(): String = configuration.getString("email_password")
 
     fun getEmailSMTPPort(): Int = configuration.getInt("email_smtp_port")
-    
+
     fun getEmailHostName(): String = configuration.getString("email_hostname")
 }
