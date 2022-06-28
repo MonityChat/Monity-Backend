@@ -2,10 +2,7 @@ package de.devin.monity.network.wsrouting
 
 import de.devin.monity.network.db.user.UserDB
 import de.devin.monity.network.wsrouting.actions.*
-import de.devin.monity.util.Error
-import de.devin.monity.util.validUUID
-import de.devin.monity.util.ConsoleColors
-import de.devin.monity.util.logInfo
+import de.devin.monity.util.*
 import org.json.JSONObject
 import java.util.*
 import kotlin.collections.ArrayList
@@ -113,6 +110,8 @@ object ActionHandler {
                 returnJson.put("content", action.execute(sender, request))
                 returnJson.put("action", actionRequest)
                 UserActivityTimer.userExecutedAction(sender)
+                logDebug("Executing action $actionRequest from $sender")
+                logDebug(actionRequest)
 
                 return returnJson
             }

@@ -71,7 +71,9 @@ object UserContactDB: Table("user_contact"), DBManager<List<FriendData>, UUID> {
      * @return list with all user who requested friendship
      */
     fun getOpenRequestsFrom(id: UUID): List<UUID> {
-        return get(id).filter { it.status == FriendStatus.PENDING }.map { it.from }
+        return transaction{
+            select { to eq id.toString() }.map { FriendData(UUID.fromString(it[root]), UUID.fromString(it[to]), FriendStatus.valueOf(it[status])) }
+            }.filter { it.status == FriendStatus.PENDING }.map { it.from }
     }
 
     /**

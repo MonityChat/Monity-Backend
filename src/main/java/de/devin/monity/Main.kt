@@ -38,7 +38,7 @@ import java.io.File
 import java.net.URLDecoder
 
 val bootLocation = LocationGetter().getLocation()
-const val version = "1.3.6"
+const val version = "1.3.7"
 const val name = "Monity"
 
 fun main() {
@@ -83,6 +83,8 @@ object Monity {
         runHTTPServer()
 
         logInfo("Server running on port ${ConsoleColors.YELLOW}${config.getHTTPPort()}")
+
+        logInfo(ConfigFileManager.getEmailSMTPPort())
 
         setAllUsersToOffline()
         ActionHandler.loadDefaultActions()
@@ -131,6 +133,7 @@ object Monity {
                             } else {
                                 try {
                                     val returnPacket = WebSocketHandler.handleIncomingContent(frame, this)
+                                    logDebug("Sending back $returnPacket")
                                     send(returnPacket)
                                 } catch (e: java.lang.Exception) {
                                     //if anything goes wrong while executing the given action, it will return an error to the user and close the connection.

@@ -121,10 +121,6 @@ enum class Error {
      */
     MESSAGE_NOT_FOUND,
 
-    /**
-     * Occurs when a users reacts to a message he has already reacted too
-     */
-    USER_ALREADY_REACTED,
 
     /**
      * Occurs when a user tries to update a non-existing setting
@@ -157,11 +153,6 @@ enum class Error {
     GROUP_IS_CLOSED,
 
     /**
-     * Occurs when a users tries to perform an action on a target but the target the blocked the user
-     */
-    INVALID_FRIEND_DECLINE_REQUEST,
-
-    /**
      * Occurs when a user tries to edit/delete a message where he is not the sender of
      */
     NOT_MESSAGE_AUTHOR,
@@ -180,6 +171,16 @@ enum class Error {
      * Occurs when an invitation is canceled, but it doesn't exist
      */
     USER_NOT_INVITED,
+
+    /**
+     * Occurs when an auth key is already used by another user
+     */
+    AUTH_IN_USE,
+
+    /**
+     * Occurs when an auth key is not bound to a user but the client tries to connect with it
+     */
+    AUTH_NOT_BOUND,
 
     /**
      * Occurs when a users tries to send another request to a user

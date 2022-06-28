@@ -12,9 +12,11 @@ import org.apache.commons.mail.HtmlEmail
 fun htmlEmail(): HtmlEmail {
     val email = HtmlEmail()
     email.hostName = ConfigFileManager.getEmailHostName()
+    email.isStartTLSEnabled = true
     email.setSmtpPort(ConfigFileManager.getEmailSMTPPort())
+    logInfo(email.smtpPort)
     email.setAuthenticator(DefaultAuthenticator(ConfigFileManager.getEmailUser(), ConfigFileManager.getEmailPassword()))
-    email.isSSLOnConnect = true
     email.setFrom(ConfigFileManager.getEmailUser())
+    email.setDebug(true)
     return email
 }

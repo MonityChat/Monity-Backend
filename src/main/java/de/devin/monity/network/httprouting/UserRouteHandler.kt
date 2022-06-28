@@ -1,10 +1,12 @@
 package de.devin.monity.network.httprouting
 
 import de.devin.monity.bootLocation
+import de.devin.monity.filemanagment.filemanagers.ConfigFileManager
 import de.devin.monity.network.auth.AuthHandler
 import de.devin.monity.network.db.user.*
 import de.devin.monity.util.Error
 import de.devin.monity.util.htmlEmail
+import de.devin.monity.util.logError
 import de.devin.monity.util.logInfo
 import io.ktor.http.*
 import io.ktor.server.application.*
@@ -19,8 +21,8 @@ import java.util.*
 private val userEmailConfirmationMap = HashMap<UUID, UserData>()
 private val userEmailResetMap = HashMap<UUID, UserData>()
 
-const val domain = "http://localhost:3000"
-const val domainAPI = "http://localhost:8808"
+val domain = ConfigFileManager.getDomain()
+val domainAPI = ConfigFileManager.getDomainAPI()
 
 /**
  * The routing which handles every available user action.
@@ -107,25 +109,30 @@ fun Route.userRoute() {
             return@post
         }
 
-
-        when (action) {
-            "register" -> run {
-                error = userRegister(user.username, user.password, user.email, user.salt)
+        try {
+            when (action) {
+                "register" -> run {
+                    error = userRegister(user.username, user.password, user.email, user.salt)
+                }
+                "resend" -> run {
+                    error = resendEmail(user.email)
+                }
+                "login" -> run {
+                    error = login(user, UUID.fromString(auth))
+                }
+                "reset" -> run {
+                    error = resetPassword(user)
+                }
+                "resetConfirm" -> run {
+                    val id = call.request.queryParameters["id"] ?: return@post call.respondText("Parameter ID missing", status = HttpStatusCode.BadRequest)
+                    error = resetPasswordConfirm(UUID.fromString(id), user)
+                }
             }
-            "resend" -> run {
-                error = resendEmail(user.email)
-            }
-            "login" -> run {
-                error = login(user, UUID.fromString(auth))
-            }
-            "reset" -> run {
-                error = resetPassword(user)
-            }
-            "resetConfirm" -> run {
-                val id = call.request.queryParameters["id"] ?: return@post call.respondText("Parameter ID missing", status = HttpStatusCode.BadRequest)
-                error = resetPasswordConfirm(UUID.fromString(id), user)
-            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            logError(e.message ?: "")
         }
+
 
         call.respond(error)
     }
@@ -190,6 +197,7 @@ private fun resetPassword(user: UserData): Error {
 
     var htmlLines = Files.readString(Path.of("$bootLocation/../resources/email.html"))
     htmlLines = htmlLines.replace("placeholder:url", link)
+    htmlLines = htmlLines.replace("placeholder:email:title", "Password reset.")
     htmlLines = htmlLines.replace("placeholder:title", "Your password reset has been acknowledged.")
     htmlLines = htmlLines.replace("placeholder:content", "To reset your password click the button below.")
     htmlLines = htmlLines.replace("placeholder:button", "Reset password")
@@ -256,11 +264,13 @@ private fun login(user: UserData, auth: UUID): Error {
     val userName = user.username.ifEmpty { null } //schauen ob der nutzername mit angeben wurde
     val email = user.email.ifEmpty { null }       //schauen ob die email mit angeben wurde
 
+    if (AuthHandler.isAuthInUse(auth)) return Error.AUTH_IN_USE
+
     if (userName == null && email == null) {
         return Error.INVALID_LOGIN_REQUEST  // falls keine Email und kein Nutzername angegeben abbrechen
     }
 
-    //Überprüfen ob Email oder Username existieirt
+    //Überprüfen ob Email oder Username existiert
     if (userName != null && !UserDB.hasUserName(userName)) {
         return Error.USER_NOT_FOUND
     }
@@ -282,6 +292,10 @@ private fun login(user: UserData, auth: UUID): Error {
     }
 
     //Authentifizierung hochstufen
+    if (AuthHandler.isUserBoundToAuth(user.uuid))
+        AuthHandler.removeAuthBoundToUser(user.uuid)
+
+    AuthHandler.bindUserToAuth(userSaved.uuid, auth)
     AuthHandler.levelUpAuthKey(auth)
 
     return Error.NONE
@@ -306,7 +320,7 @@ private fun resendEmail(emailAddress: String): Error {
 
     var htmlLines = Files.readString(Path.of("$bootLocation/../resources/email.html"))
     htmlLines = htmlLines.replace("placeholder:url", link)
-    htmlLines = htmlLines.replace("placeholder:title", "Thank you for creating a MONITY account!")
+    htmlLines = htmlLines.replace("placeholder:title", "Thank you for creating a MONITY account <3!")
     htmlLines = htmlLines.replace(
         "placeholder:content",
         "Thank you for creating a Monity account.\nTo complete your registration click the link below."
@@ -355,6 +369,8 @@ private fun userRegister(username: String, password: String, emailAddress: Strin
     email.embed(File("$bootLocation/../resources/waves.png"), "waves")
 
     var htmlLines = Files.readString(Path.of("$bootLocation/../resources/email.html"))
+    htmlLines = htmlLines.replace("placeholder:email:title", "Monity Registration Process")
+    htmlLines = htmlLines.replace("placeholder:title", "Thank you for creating a MONITY account <3!")
     htmlLines = htmlLines.replace("placeholder:url", link)
     htmlLines = htmlLines.replace(
         "placeholder:content",
@@ -367,6 +383,7 @@ private fun userRegister(username: String, password: String, emailAddress: Strin
         logInfo("Send registration email to: $emailAddress")
         email.send()
     } catch (e: Exception) {
+        e.printStackTrace()
         return Error.EMAIL_NOT_FOUND
     }
 

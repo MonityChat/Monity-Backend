@@ -80,9 +80,14 @@ object WebSocketHandler {
                     val userName = reader.json.getString("user")
 
                     if (!validUUID(authKey)) return socket.sendAndClose(Error.INVALID_UUID_FORMAT)
-                    if (!UserDB.hasEmailOrUser(userName)) return socket.sendAndClose(Error.USER_NOT_FOUND)
 
                     val auth = UUID.fromString(authKey)
+                    val user = UserDB.getByUserOrEmail(userName)
+
+                    if (!UserDB.hasEmailOrUser(userName)) return socket.sendAndClose(Error.USER_NOT_FOUND)
+                    if (!AuthHandler.isAuthInUse(auth)) return socket.sendAndClose(Error.AUTH_NOT_BOUND)
+                    if (AuthHandler.getUserForAuth(auth) != user.uuid) return socket.sendAndClose(Error.AUTH_IN_USE)
+
 
                     if (!AuthHandler.isAuthenticated(auth)) {
                         return socket.sendAndClose(Error.UNAUTHORIZED)
@@ -91,7 +96,6 @@ object WebSocketHandler {
                     if (AuthHandler.getLevel(auth).weight < AuthLevel.AUTH_LEVEL_USER.weight)
                         return socket.sendAndClose(Error.UNAUTHORIZED)
 
-                    val user = UserDB.getByUserOrEmail(userName)
 
                     logInfo("Allowing connection to pass from $userName")
                     socketAuthMap[user.uuid] = socket

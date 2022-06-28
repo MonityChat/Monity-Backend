@@ -38,6 +38,11 @@ fun logWarning(message: Any) = printlnAndReset(printBase() + "${ConsoleColors.BL
 
 
 /**
+ * Will log a debug message
+ */
+fun logDebug(message: Any) = printlnAndReset(printBase() + "${ConsoleColors.BLACK_BRIGHT}[${ConsoleColors.YELLOW}DEBUG${ConsoleColors.BLACK_BRIGHT}]${ConsoleColors.RESET} $message")
+
+/**
  * prints the given message and resets the consolecolors afterwards
  * @see ConsoleColors
  * @param message message to print
