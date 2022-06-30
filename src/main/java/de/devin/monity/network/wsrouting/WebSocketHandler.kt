@@ -196,6 +196,7 @@ object WebSocketHandler {
     fun closeConnection(session: DefaultWebSocketSession) {
         val uuid = getOldUUIDFrom(session) //this is an old session because the connection is already not active anymore
         logInfo("Closing websocket to User $uuid")
+        AuthHandler.removeAuthBoundToUser(uuid)
         closed(session)
         executeLogoutActions(uuid)
     }

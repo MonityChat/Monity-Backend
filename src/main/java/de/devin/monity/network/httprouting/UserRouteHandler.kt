@@ -279,12 +279,14 @@ private fun login(user: UserData, auth: UUID): Error {
         return Error.EMAIL_NOT_FOUND
     }
 
-
     //Den nutzername anhand des Nutzers und Email
     val userSaved: UserData = if (userName == null)
         UserDB.getByEmail(email!!)
     else
         UserDB.getByName(userName)
+
+    logInfo(userSaved.password)
+    logInfo(user.password)
 
     //Password überprüfung
     if (userSaved.password != user.password) {
